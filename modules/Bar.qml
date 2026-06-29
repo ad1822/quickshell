@@ -369,7 +369,10 @@ PanelWindow {
         repeat: false
         onTriggered: {
             closeTimer.stop();
-            popupLoader.active = true;
+            if (popupLoader.active && popupLoader.item)
+                popupLoader.item.cancelClose();
+            else
+                popupLoader.active = true;
         }
     }
 
@@ -378,7 +381,12 @@ PanelWindow {
 
         interval: 200
         repeat: false
-        onTriggered: popupLoader.active = false
+        onTriggered: {
+            if (popupLoader.item)
+                popupLoader.item.closePopup();
+            else
+                popupLoader.active = false;
+        }
     }
 
     // --- Memory Popup Timers ---
@@ -389,7 +397,10 @@ PanelWindow {
         repeat: false
         onTriggered: {
             memCloseTimer.stop();
-            memPopupLoader.active = true;
+            if (memPopupLoader.active && memPopupLoader.item)
+                memPopupLoader.item.cancelClose();
+            else
+                memPopupLoader.active = true;
         }
     }
 
@@ -398,7 +409,12 @@ PanelWindow {
 
         interval: 200
         repeat: false
-        onTriggered: memPopupLoader.active = false
+        onTriggered: {
+            if (memPopupLoader.item)
+                memPopupLoader.item.closePopup();
+            else
+                memPopupLoader.active = false;
+        }
     }
 
     // --- Network Popup Timers ---
@@ -409,7 +425,10 @@ PanelWindow {
         repeat: false
         onTriggered: {
             netCloseTimer.stop();
-            netPopupLoader.active = true;
+            if (netPopupLoader.active && netPopupLoader.item)
+                netPopupLoader.item.cancelClose();
+            else
+                netPopupLoader.active = true;
         }
     }
 
@@ -418,7 +437,12 @@ PanelWindow {
 
         interval: 200
         repeat: false
-        onTriggered: netPopupLoader.active = false
+        onTriggered: {
+            if (netPopupLoader.item)
+                netPopupLoader.item.closePopup();
+            else
+                netPopupLoader.active = false;
+        }
     }
 
     // --- Wifi Popup Timers & Loader ---
@@ -429,7 +453,10 @@ PanelWindow {
         repeat: false
         onTriggered: {
             wifiCloseTimer.stop();
-            wifiPopupLoader.active = true;
+            if (wifiPopupLoader.active && wifiPopupLoader.item)
+                wifiPopupLoader.item.cancelClose();
+            else
+                wifiPopupLoader.active = true;
         }
     }
 
@@ -438,7 +465,12 @@ PanelWindow {
 
         interval: 200
         repeat: false
-        onTriggered: wifiPopupLoader.active = false
+        onTriggered: {
+            if (wifiPopupLoader.item)
+                wifiPopupLoader.item.closePopup();
+            else
+                wifiPopupLoader.active = false;
+        }
     }
 
     Loader {
@@ -447,8 +479,6 @@ PanelWindow {
         active: false
         source: "../components/popout/WifiPopup.qml"
     }
-
-
 
     // --- Player Popup Timers & Loader ---
     Timer {
@@ -468,7 +498,7 @@ PanelWindow {
     Timer {
         id: playerCloseTimer
 
-        interval: 1500
+        interval: 1000
         repeat: false
         onTriggered: {
             if (playerPopupLoader.item)
@@ -645,4 +675,38 @@ PanelWindow {
         source: "../components/popout/NetPopup.qml"
     }
 
+    // --- Volume OSD Overlay ---
+    VolumeOsd {
+        id: volumeOsd
+    }
+
+    // --- Volume OSD Trigger Connections ---
+    Connections {
+        target: barVolumeWidget
+
+        // Ignore the initial property bind on startup to prevent boot notifications
+        property bool initialized: false
+
+        function onVolumeChanged() {
+            if (!initialized) {
+                if (barVolumeWidget.volume > 0) {
+                    initialized = true;
+                }
+                return;
+            }
+            if (!barVolumeWidget.isAdjusting) {
+                volumeOsd.trigger(barVolumeWidget.volume, barVolumeWidget.isMuted);
+            }
+        }
+
+        function onIsMutedChanged() {
+            if (!initialized) {
+                initialized = true;
+                return;
+            }
+            if (!barVolumeWidget.isAdjusting) {
+                volumeOsd.trigger(barVolumeWidget.volume, barVolumeWidget.isMuted);
+            }
+        }
+    }
 }

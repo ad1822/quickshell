@@ -10,3 +10,4 @@ Volume 1.0 Volume.qml
 Brightness 1.0 Brightness.qml
 WifiIcon 1.0 WifiIcon.qml
 Battery 1.0 Battery.qml
+VolumeOsd 1.0 VolumeOsd.qml

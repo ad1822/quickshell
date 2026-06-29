@@ -146,7 +146,7 @@ Item {
     implicitHeight: rowLayout.implicitHeight
     width: implicitWidth
     height: implicitHeight
-    visible: activePlayer !== null
+    visible: true
 
     // Process helper to run curl in the background
     Process {
@@ -181,6 +181,17 @@ Item {
         anchors.fill: parent
         spacing: 8
 
+        // Static Music Icon when paused/stopped/no active player
+        Text {
+            id: staticMusicIcon
+            text: "music_note"
+            color: Style.overlay1
+            font.family: "Material Symbols Rounded"
+            font.pixelSize: 14
+            verticalAlignment: Text.AlignVCenter
+            visible: !playerWidget.isPlaying
+        }
+
         // Premium Animated Music Visualizer (Bounces when playing, freezes when paused)
         Row {
             id: miniVisualizer
@@ -189,6 +200,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             height: 12
             width: 10
+            visible: playerWidget.isPlaying
 
             Rectangle {
                 id: bar1
@@ -307,6 +319,7 @@ Item {
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
             width: Math.min(implicitWidth, 180)
+            visible: playerWidget.activePlayer !== null && playerWidget.title !== ""
         }
 
     }

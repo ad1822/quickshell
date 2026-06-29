@@ -7,6 +7,48 @@ import "../../components"
 PopupWindow {
     id: memPopup
 
+    readonly property bool isMouseOver: {
+        var p = false;
+        try {
+            p = p || parentMouseArea.containsMouse;
+        } catch (e) {
+        }
+        return p;
+    }
+
+    function closePopup() {
+        memPopupContent.width = 40;
+        memPopupContent.height = 20;
+        memPopupContent.opacity = 0;
+        destroyTimer.start();
+    }
+
+    function cancelClose() {
+        destroyTimer.stop();
+        memPopupContent.width = 150;
+        memPopupContent.height = 220;
+        memPopupContent.opacity = 1;
+    }
+
+    onIsMouseOverChanged: {
+        if (isMouseOver) {
+            memOpenTimer.stop();
+            memCloseTimer.stop();
+            if (destroyTimer.running)
+                memPopup.cancelClose();
+        } else {
+            memCloseTimer.start();
+        }
+    }
+
+    Timer {
+        id: destroyTimer
+
+        interval: 300
+        repeat: false
+        onTriggered: memPopupLoader.active = false
+    }
+
     function getProcessInfo(name, memStr) {
         var mem = parseFloat(memStr) || 0;
         var nameLower = name.toLowerCase();
@@ -261,14 +303,11 @@ PopupWindow {
             }
 
             MouseArea {
+                id: parentMouseArea
+
                 anchors.fill: parent
                 hoverEnabled: true
                 propagateComposedEvents: true
-                onEntered: {
-                    memOpenTimer.stop();
-                    memCloseTimer.stop();
-                }
-                onExited: memCloseTimer.start()
             }
 
             Timer {

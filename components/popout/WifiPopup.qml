@@ -42,13 +42,37 @@ PopupWindow {
         if (!visible)
             wifiPopupLoader.active = false;
     }
+    function closePopup() {
+        wifiPopupContent.width = 40;
+        wifiPopupContent.height = 20;
+        wifiPopupContent.opacity = 0;
+        destroyTimer.start();
+    }
+
+    function cancelClose() {
+        destroyTimer.stop();
+        wifiPopupContent.width = 280;
+        wifiPopupContent.height = 280;
+        wifiPopupContent.opacity = 1;
+    }
+
     onIsMouseOverChanged: {
         if (isMouseOver) {
             wifiOpenTimer.stop();
             wifiCloseTimer.stop();
+            if (destroyTimer.running)
+                wifiPopup.cancelClose();
         } else {
             wifiCloseTimer.start();
         }
+    }
+
+    Timer {
+        id: destroyTimer
+
+        interval: 300
+        repeat: false
+        onTriggered: wifiPopupLoader.active = false
     }
 
     ListModel {

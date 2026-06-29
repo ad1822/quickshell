@@ -7,12 +7,54 @@ import "../../components"
 PopupWindow {
     id: netPopup
 
+    readonly property bool isMouseOver: {
+        var p = false;
+        try {
+            p = p || parentMouseArea.containsMouse;
+        } catch (e) {
+        }
+        return p;
+    }
+
+    function closePopup() {
+        netPopupContent.width = 40;
+        netPopupContent.height = 20;
+        netPopupContent.opacity = 0;
+        destroyTimer.start();
+    }
+
+    function cancelClose() {
+        destroyTimer.stop();
+        netPopupContent.width = 220;
+        netPopupContent.height = 140;
+        netPopupContent.opacity = 1;
+    }
+
+    onIsMouseOverChanged: {
+        if (isMouseOver) {
+            netOpenTimer.stop();
+            netCloseTimer.stop();
+            if (destroyTimer.running)
+                netPopup.cancelClose();
+        } else {
+            netCloseTimer.start();
+        }
+    }
+
+    Timer {
+        id: destroyTimer
+
+        interval: 300
+        repeat: false
+        onTriggered: netPopupLoader.active = false
+    }
+
     anchor.window: barWindow
-    // Align the popup's center to the Network widget's center (globally mapped)
-    anchor.rect.x: modulesContainer.x + netWidget.x + (netWidget.width / 2) - 140
+    // Align the popup's center to the Network widget's average position (completely static)
+    anchor.rect.x: modulesContainer.x + 5
     anchor.rect.y: barWindow.height
     implicitWidth: 280
-    implicitHeight: 160
+    implicitHeight: 140
     color: "transparent"
     visible: true
     onVisibleChanged: {
@@ -24,13 +66,35 @@ PopupWindow {
     }
 
     ListModel {
-        id: topNetProcessesModel
+        id: downloadModel
+    }
+
+    ListModel {
+        id: uploadModel
+    }
+
+    // Function to format speed value into human-readable B/K/M formats
+    function formatSpeed(speed) {
+        if (speed <= 0)
+            return "-";
+
+        if (speed < 1) {
+            var bytes = speed * 1024;
+            if (bytes < 10)
+                return "-";
+
+            return Math.round(bytes) + "B";
+        }
+        if (speed < 1024)
+            return speed.toFixed(1) + "K";
+
+        return (speed / 1024).toFixed(1) + "M";
     }
 
     QsIo.Process {
         id: topNetProcessesProc
 
-        command: ["nethogs", "-t"]
+        command: ["stdbuf", "-oL", "nethogs", "-t"]
 
         stdout: QsIo.SplitParser {
             property var tempProcesses: []
@@ -42,8 +106,6 @@ PopupWindow {
                 var line = data.trim();
                 if (line.indexOf("Refreshing:") === 0) {
                     if (tempProcesses.length > 0) {
-                        var totalTx = 0;
-                        var totalRx = 0;
                         var validProcesses = [];
                         for (var i = 0; i < tempProcesses.length; i++) {
                             var p = tempProcesses[i];
@@ -51,29 +113,40 @@ PopupWindow {
                             if (nameLower === "unknown" || nameLower === "nethogs" || nameLower === "sh" || nameLower === "bash")
                                 continue;
 
-                            totalTx += p.tx;
-                            totalRx += p.rx;
                             validProcesses.push(p);
                         }
+
                         if (validProcesses.length > 0) {
-                            var uploadSorted = totalTx > totalRx;
-                            if (uploadSorted)
-                                validProcesses.sort((a, b) => {
-                                    return b.tx - a.tx;
-                                });
-                            else
-                                validProcesses.sort((a, b) => {
-                                    return b.rx - a.rx;
-                                });
-                            topNetProcessesModel.clear();
-                            for (var j = 0; j < validProcesses.length && j < 5; j++) {
-                                var item = validProcesses[j];
-                                topNetProcessesModel.append({
-                                    "name": item.name,
-                                    "tx": item.tx,
-                                    "rx": item.rx,
-                                    "isUploadSorted": uploadSorted
-                                });
+                            // 1. Sort and extract top 2 downloads
+                            var dlProcesses = validProcesses.slice();
+                            dlProcesses.sort((a, b) => b.rx - a.rx);
+                            downloadModel.clear();
+                            var dlCount = 0;
+                            for (var j = 0; j < dlProcesses.length && dlCount < 2; j++) {
+                                var dlItem = dlProcesses[j];
+                                if (dlItem.rx > 0.01) {
+                                    downloadModel.append({
+                                        "name": dlItem.name,
+                                        "rx": dlItem.rx
+                                    });
+                                    dlCount++;
+                                }
+                            }
+
+                            // 2. Sort and extract top 2 uploads
+                            var ulProcesses = validProcesses.slice();
+                            ulProcesses.sort((a, b) => b.tx - a.tx);
+                            uploadModel.clear();
+                            var ulCount = 0;
+                            for (var k = 0; k < ulProcesses.length && ulCount < 2; k++) {
+                                var ulItem = ulProcesses[k];
+                                if (ulItem.tx > 0.01) {
+                                    uploadModel.append({
+                                        "name": ulItem.name,
+                                        "tx": ulItem.tx
+                                    });
+                                    ulCount++;
+                                }
                             }
                         }
                     }
@@ -85,10 +158,13 @@ PopupWindow {
                         var tx = parseFloat(parts[1]) || 0;
                         var rx = parseFloat(parts[2]) || 0;
                         if (tx > 0 || rx > 0) {
-                            var fullPath = progInfo.split("/")[0];
-                            var progName = fullPath.substring(fullPath.lastIndexOf('/') + 1);
-                            if (progName === "")
-                                progName = fullPath;
+                            var subParts = progInfo.split("/");
+                            var progName = "unknown";
+                            if (subParts.length >= 3) {
+                                progName = subParts[subParts.length - 3];
+                            } else if (subParts.length > 0) {
+                                progName = subParts[0];
+                            }
 
                             tempProcesses.push({
                                 "name": progName,
@@ -142,22 +218,6 @@ PopupWindow {
                     direction: PathArc.Counterclockwise
                 }
             }
-
-            ShapePath {
-                fillColor: "transparent"
-                strokeColor: Style.surface1
-                strokeWidth: 0
-                startX: 24
-                startY: 24
-
-                PathArc {
-                    x: 0
-                    y: 0
-                    radiusX: 24
-                    radiusY: 24
-                    direction: PathArc.Counterclockwise
-                }
-            }
         }
 
         // Right Fillet (Inverted Border Corner)
@@ -197,22 +257,6 @@ PopupWindow {
                     direction: PathArc.Clockwise
                 }
             }
-
-            ShapePath {
-                fillColor: "transparent"
-                strokeColor: Style.surface1
-                strokeWidth: 0
-                startX: 0
-                startY: 24
-
-                PathArc {
-                    x: 24
-                    y: 0
-                    radiusX: 24
-                    radiusY: 24
-                    direction: PathArc.Clockwise
-                }
-            }
         }
 
         Item {
@@ -239,7 +283,7 @@ PopupWindow {
                 border.width: 0
             }
 
-            // Left border mask (erases the vertical border in the fillet zone)
+            // Left border mask
             Rectangle {
                 anchors.left: parent.left
                 anchors.top: parent.top
@@ -248,7 +292,7 @@ PopupWindow {
                 color: Style.crust
             }
 
-            // Right border mask (erases the vertical border in the fillet zone)
+            // Right border mask
             Rectangle {
                 anchors.right: parent.right
                 anchors.top: parent.top
@@ -258,14 +302,11 @@ PopupWindow {
             }
 
             MouseArea {
+                id: parentMouseArea
+
                 anchors.fill: parent
                 hoverEnabled: true
                 propagateComposedEvents: true
-                onEntered: {
-                    netOpenTimer.stop();
-                    netCloseTimer.stop();
-                }
-                onExited: netCloseTimer.start()
             }
 
             Timer {
@@ -274,76 +315,154 @@ PopupWindow {
                 repeat: false
                 onTriggered: {
                     netPopupContent.width = 220;
-                    netPopupContent.height = 160;
+                    netPopupContent.height = 140;
                     netPopupContent.opacity = 1;
                 }
             }
 
-            ListView {
+            // Details & Split Layout
+            Column {
                 anchors.fill: parent
-                anchors.margins: 10
-                model: topNetProcessesModel
-                spacing: 6
-                clip: true
+                anchors.topMargin: 12
+                anchors.bottomMargin: 12
+                anchors.leftMargin: 16
+                anchors.rightMargin: 16
+                spacing: 8
 
-                delegate: Item {
-                    width: ListView.view.width
-                    height: 18
+                // --- DOWNLOADS SECTION ---
+                Column {
+                    width: parent.width
+                    spacing: 4
 
                     Text {
-                        id: dirIcon
-
-                        text: model.isUploadSorted ? "arrow_upward" : "arrow_downward"
-                        color: model.isUploadSorted ? Style.peach : Style.green
-                        font.family: "Material Symbols Rounded"
-                        font.pixelSize: 11
-                        width: 12
-                        horizontalAlignment: Text.AlignHCenter
-                        anchors.left: parent.left
-                        anchors.verticalCenter: parent.verticalCenter
+                        text: "Downloads"
+                        color: Style.green
+                        font.family: Style.fontFamily
+                        font.pixelSize: 9
+                        font.weight: Font.Bold
                     }
 
+                    // Placeholder if empty
                     Text {
-                        id: speedText
+                        text: "No active downloads"
+                        color: Style.overlay1
+                        font.family: Style.fontFamily
+                        font.pixelSize: 10
+                        visible: downloadModel.count === 0
+                    }
 
-                        width: 45
-                        horizontalAlignment: Text.AlignRight
-                        text: {
-                            var speed = model.isUploadSorted ? model.tx : model.rx;
-                            if (speed <= 0)
-                                return "-";
+                    Repeater {
+                        model: downloadModel
+                        delegate: Item {
+                            width: parent.width
+                            height: 16
 
-                            if (speed < 1) {
-                                var bytes = speed * 1024;
-                                if (bytes < 10)
-                                    return "-";
-
-                                return Math.round(bytes) + "B";
+                            Text {
+                                id: dlIcon
+                                text: "arrow_downward"
+                                color: Style.green
+                                font.family: "Material Symbols Rounded"
+                                font.pixelSize: 10
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
                             }
-                            if (speed < 1024)
-                                return speed.toFixed(1) + "K";
 
-                            return (speed / 1024).toFixed(1) + "M";
+                            Text {
+                                text: model.name
+                                color: Style.text
+                                font.family: Style.fontFamily
+                                font.pixelSize: 10
+                                anchors.left: dlIcon.right
+                                anchors.leftMargin: 6
+                                anchors.right: dlSpeedText.left
+                                anchors.rightMargin: 6
+                                elide: Text.ElideRight
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            Text {
+                                id: dlSpeedText
+                                text: netPopup.formatSpeed(model.rx)
+                                color: Style.text
+                                font.family: Style.fontFamily
+                                font.pixelSize: 10
+                                font.weight: Font.Bold
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
                         }
-                        color: Style.text
-                        font.family: Style.fontFamily
-                        font.pixelSize: 11
-                        font.bold: true
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
                     }
+                }
+
+                // --- HORIZONTAL SEPARATOR ---
+                Rectangle {
+                    width: parent.width
+                    height: 1
+                    color: Style.surface1
+                }
+
+                // --- UPLOADS SECTION ---
+                Column {
+                    width: parent.width
+                    spacing: 4
 
                     Text {
-                        anchors.left: dirIcon.right
-                        anchors.leftMargin: 6
-                        anchors.right: speedText.left
-                        anchors.rightMargin: 6
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: model.name
-                        color: Style.text
+                        text: "Uploads"
+                        color: Style.peach
                         font.family: Style.fontFamily
-                        font.pixelSize: 11
-                        elide: Text.ElideRight
+                        font.pixelSize: 9
+                        font.weight: Font.Bold
+                    }
+
+                    // Placeholder if empty
+                    Text {
+                        text: "No active uploads"
+                        color: Style.overlay1
+                        font.family: Style.fontFamily
+                        font.pixelSize: 10
+                        visible: uploadModel.count === 0
+                    }
+
+                    Repeater {
+                        model: uploadModel
+                        delegate: Item {
+                            width: parent.width
+                            height: 16
+
+                            Text {
+                                id: ulIcon
+                                text: "arrow_upward"
+                                color: Style.peach
+                                font.family: "Material Symbols Rounded"
+                                font.pixelSize: 10
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            Text {
+                                text: model.name
+                                color: Style.text
+                                font.family: Style.fontFamily
+                                font.pixelSize: 10
+                                anchors.left: ulIcon.right
+                                anchors.leftMargin: 6
+                                anchors.right: ulSpeedText.left
+                                anchors.rightMargin: 6
+                                elide: Text.ElideRight
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            Text {
+                                id: ulSpeedText
+                                text: netPopup.formatSpeed(model.tx)
+                                color: Style.text
+                                font.family: Style.fontFamily
+                                font.pixelSize: 10
+                                font.weight: Font.Bold
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
                     }
                 }
             }

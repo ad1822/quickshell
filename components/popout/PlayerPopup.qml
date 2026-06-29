@@ -358,7 +358,7 @@ PopupWindow {
                     Text {
                         id: timeText
 
-                        text: playerPopup.formatTime(playerWidget.position) + " / " + playerPopup.formatTime(playerWidget.length)
+                        // text: playerPopup.formatTime(playerWidget.position) + " / " + playerPopup.formatTime(playerWidget.length)
                         color: Style.subtext0
                         font.family: Style.fontFamily
                         font.pixelSize: 10
