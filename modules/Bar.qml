@@ -9,7 +9,7 @@ import Quickshell.Wayland
 PanelWindow {
     id: barWindow
 
-    property bool modulesExpanded: true
+    property bool modulesExpanded: false
     property bool barExpanded: false
 
     anchors.top: true
