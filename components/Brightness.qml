@@ -31,7 +31,6 @@ Rectangle {
     implicitHeight: 22
     color: "transparent"
     radius: 6
-    Component.onCompleted: brightProc.running = true
 
     Text {
         id: contentText
@@ -47,28 +46,36 @@ Rectangle {
     Process {
         id: brightProc
 
-        command: ["sh", "-c", "brightnessctl -m | cut -d, -f4 | tr -d '%'"]
-        running: false
+        command: [
+            "sh", "-c",
+            "dir=$(ls -d /sys/class/backlight/* 2>/dev/null | head -1); " +
+            "if [ -n \"$dir\" ] && [ -d \"$dir\" ]; then " +
+            "  max=$(cat \"$dir/max_brightness\"); " +
+            "  last=\"\"; " +
+            "  while true; do " +
+            "    curr=$(cat \"$dir/brightness\"); " +
+            "    if [ \"$curr\" != \"$last\" ]; then " +
+            "      echo $(( curr * 100 / max )); " +
+            "      last=\"$curr\"; " +
+            "    fi; " +
+            "    sleep 0.15; " +
+            "  done; " +
+            "fi"
+        ]
+        running: true
 
         stdout: SplitParser {
             onRead: (data) => {
                 if (!data)
                     return ;
 
-                if (!brightRoot.isAdjusting)
-                    brightRoot.brightness = parseInt(data.trim()) || 0;
-
+                var val = parseInt(data.trim());
+                if (!isNaN(val)) {
+                    if (!brightRoot.isAdjusting)
+                        brightRoot.brightness = val;
+                }
             }
         }
-
-    }
-
-    Timer {
-        interval: 2000
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: brightProc.running = true
     }
 
     MouseArea {

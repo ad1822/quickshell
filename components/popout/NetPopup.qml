@@ -1,8 +1,8 @@
+import "../../components"
 import QtQuick
 import QtQuick.Shapes
 import Quickshell
 import Quickshell.Io as QsIo
-import "../../components"
 
 PopupWindow {
     id: netPopup
@@ -30,49 +30,6 @@ PopupWindow {
         netPopupContent.opacity = 1;
     }
 
-    onIsMouseOverChanged: {
-        if (isMouseOver) {
-            netOpenTimer.stop();
-            netCloseTimer.stop();
-            if (destroyTimer.running)
-                netPopup.cancelClose();
-        } else {
-            netCloseTimer.start();
-        }
-    }
-
-    Timer {
-        id: destroyTimer
-
-        interval: 300
-        repeat: false
-        onTriggered: netPopupLoader.active = false
-    }
-
-    anchor.window: barWindow
-    // Align the popup's center to the Network widget's average position (completely static)
-    anchor.rect.x: modulesContainer.x + 5
-    anchor.rect.y: barWindow.height
-    implicitWidth: 280
-    implicitHeight: 140
-    color: "transparent"
-    visible: true
-    onVisibleChanged: {
-        if (!visible)
-            netPopupLoader.active = false;
-    }
-    Component.onCompleted: {
-        topNetProcessesProc.running = true;
-    }
-
-    ListModel {
-        id: downloadModel
-    }
-
-    ListModel {
-        id: uploadModel
-    }
-
     // Function to format speed value into human-readable B/K/M formats
     function formatSpeed(speed) {
         if (speed <= 0)
@@ -89,6 +46,50 @@ PopupWindow {
             return speed.toFixed(1) + "K";
 
         return (speed / 1024).toFixed(1) + "M";
+    }
+
+    onIsMouseOverChanged: {
+        if (isMouseOver) {
+            netOpenTimer.stop();
+            netCloseTimer.stop();
+            if (destroyTimer.running)
+                netPopup.cancelClose();
+
+        } else {
+            netCloseTimer.start();
+        }
+    }
+    anchor.window: barWindow
+    // Align the popup's center to the Network widget's average position (completely static)
+    anchor.rect.x: modulesContainer.x + 5
+    anchor.rect.y: barWindow.height
+    implicitWidth: 280
+    implicitHeight: 140
+    color: "transparent"
+    visible: true
+    onVisibleChanged: {
+        if (!visible)
+            netPopupLoader.active = false;
+
+    }
+    Component.onCompleted: {
+        topNetProcessesProc.running = true;
+    }
+
+    Timer {
+        id: destroyTimer
+
+        interval: 300
+        repeat: false
+        onTriggered: netPopupLoader.active = false
+    }
+
+    ListModel {
+        id: downloadModel
+    }
+
+    ListModel {
+        id: uploadModel
     }
 
     QsIo.Process {
@@ -115,11 +116,12 @@ PopupWindow {
 
                             validProcesses.push(p);
                         }
-
                         if (validProcesses.length > 0) {
                             // 1. Sort and extract top 2 downloads
                             var dlProcesses = validProcesses.slice();
-                            dlProcesses.sort((a, b) => b.rx - a.rx);
+                            dlProcesses.sort((a, b) => {
+                                return b.rx - a.rx;
+                            });
                             downloadModel.clear();
                             var dlCount = 0;
                             for (var j = 0; j < dlProcesses.length && dlCount < 2; j++) {
@@ -132,10 +134,11 @@ PopupWindow {
                                     dlCount++;
                                 }
                             }
-
                             // 2. Sort and extract top 2 uploads
                             var ulProcesses = validProcesses.slice();
-                            ulProcesses.sort((a, b) => b.tx - a.tx);
+                            ulProcesses.sort((a, b) => {
+                                return b.tx - a.tx;
+                            });
                             uploadModel.clear();
                             var ulCount = 0;
                             for (var k = 0; k < ulProcesses.length && ulCount < 2; k++) {
@@ -160,12 +163,10 @@ PopupWindow {
                         if (tx > 0 || rx > 0) {
                             var subParts = progInfo.split("/");
                             var progName = "unknown";
-                            if (subParts.length >= 3) {
+                            if (subParts.length >= 3)
                                 progName = subParts[subParts.length - 3];
-                            } else if (subParts.length > 0) {
+                            else if (subParts.length > 0)
                                 progName = subParts[0];
-                            }
-
                             tempProcesses.push({
                                 "name": progName,
                                 "tx": tx,
@@ -176,6 +177,7 @@ PopupWindow {
                 }
             }
         }
+
     }
 
     Item {
@@ -217,7 +219,9 @@ PopupWindow {
                     radiusY: 24
                     direction: PathArc.Counterclockwise
                 }
+
             }
+
         }
 
         // Right Fillet (Inverted Border Corner)
@@ -256,7 +260,9 @@ PopupWindow {
                     radiusY: 24
                     direction: PathArc.Clockwise
                 }
+
             }
+
         }
 
         Item {
@@ -334,14 +340,6 @@ PopupWindow {
                     width: parent.width
                     spacing: 4
 
-                    Text {
-                        text: "Downloads"
-                        color: Style.green
-                        font.family: Style.fontFamily
-                        font.pixelSize: 9
-                        font.weight: Font.Bold
-                    }
-
                     // Placeholder if empty
                     Text {
                         text: "No active downloads"
@@ -353,12 +351,14 @@ PopupWindow {
 
                     Repeater {
                         model: downloadModel
+
                         delegate: Item {
                             width: parent.width
                             height: 16
 
                             Text {
                                 id: dlIcon
+
                                 text: "arrow_downward"
                                 color: Style.green
                                 font.family: "Material Symbols Rounded"
@@ -382,6 +382,7 @@ PopupWindow {
 
                             Text {
                                 id: dlSpeedText
+
                                 text: netPopup.formatSpeed(model.rx)
                                 color: Style.text
                                 font.family: Style.fontFamily
@@ -390,8 +391,11 @@ PopupWindow {
                                 anchors.right: parent.right
                                 anchors.verticalCenter: parent.verticalCenter
                             }
+
                         }
+
                     }
+
                 }
 
                 // --- HORIZONTAL SEPARATOR ---
@@ -406,17 +410,9 @@ PopupWindow {
                     width: parent.width
                     spacing: 4
 
-                    Text {
-                        text: "Uploads"
-                        color: Style.peach
-                        font.family: Style.fontFamily
-                        font.pixelSize: 9
-                        font.weight: Font.Bold
-                    }
-
                     // Placeholder if empty
                     Text {
-                        text: "No active uploads"
+                        text: "Scanning"
                         color: Style.overlay1
                         font.family: Style.fontFamily
                         font.pixelSize: 10
@@ -425,12 +421,14 @@ PopupWindow {
 
                     Repeater {
                         model: uploadModel
+
                         delegate: Item {
                             width: parent.width
                             height: 16
 
                             Text {
                                 id: ulIcon
+
                                 text: "arrow_upward"
                                 color: Style.peach
                                 font.family: "Material Symbols Rounded"
@@ -454,6 +452,7 @@ PopupWindow {
 
                             Text {
                                 id: ulSpeedText
+
                                 text: netPopup.formatSpeed(model.tx)
                                 color: Style.text
                                 font.family: Style.fontFamily
@@ -462,9 +461,13 @@ PopupWindow {
                                 anchors.right: parent.right
                                 anchors.verticalCenter: parent.verticalCenter
                             }
+
                         }
+
                     }
+
                 }
+
             }
 
             Behavior on width {
@@ -473,6 +476,7 @@ PopupWindow {
                     easing.type: Easing.Bezier
                     easing.bezierCurve: Style.expressiveDefaultSpatialCurve
                 }
+
             }
 
             Behavior on height {
@@ -481,6 +485,7 @@ PopupWindow {
                     easing.type: Easing.Bezier
                     easing.bezierCurve: Style.expressiveDefaultSpatialCurve
                 }
+
             }
 
             Behavior on opacity {
@@ -489,7 +494,11 @@ PopupWindow {
                     easing.type: Easing.Bezier
                     easing.bezierCurve: Style.expressiveDefaultEffectsCurve
                 }
+
             }
+
         }
+
     }
+
 }

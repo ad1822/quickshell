@@ -121,7 +121,7 @@ Rectangle {
                     // Hover number text overlay
                     Text {
                         anchors.centerIn: parent
-                        text: index + 1
+                        text: ""
                         color: isActive ? Style.base : Style.text
                         font.family: Style.fontFamily
                         font.pixelSize: 8

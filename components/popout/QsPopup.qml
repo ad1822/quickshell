@@ -406,12 +406,23 @@ PopupWindow {
                                 anchors.verticalCenter: parent.verticalCenter
 
                                 Text {
+                                    id: brightKnobIcon
                                     text: barBrightnessWidget.brightnessIcon(barBrightnessWidget.brightness)
                                     color: Style.base
                                     font.family: "Material Symbols Rounded"
                                     font.pixelSize: 11
                                     font.weight: Style.fontWeight
                                     anchors.centerIn: parent
+
+                                    property real rotationAngle: 0
+                                    rotation: rotationAngle
+
+                                    Behavior on rotation {
+                                        NumberAnimation {
+                                            duration: 400
+                                            easing.type: Easing.OutQuad
+                                        }
+                                    }
                                 }
 
                                 MouseArea {
@@ -422,6 +433,7 @@ PopupWindow {
                                     cursorShape: Qt.PointingHandCursor
                                     propagateComposedEvents: true
                                     onPressed: (mouse) => {
+                                        brightKnobIcon.rotationAngle += 360;
                                         if (mouse.button === Qt.LeftButton)
                                             mouse.accepted = false;
                                     }

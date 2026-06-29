@@ -1,3 +1,4 @@
+import "../components"
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
@@ -5,15 +6,13 @@ import Quickshell.Wayland
 PanelWindow {
     id: osdWindow
 
-    property int currentVolume: 0
-    property bool isMuted: false
+    property int currentBrightness: 0
 
-    function trigger(vol, muted) {
-        currentVolume = vol;
-        isMuted = muted;
+    function trigger(brightness) {
+        currentBrightness = brightness;
         dismissTimer.stop();
-        osdWindow.visible = true; // Instantly map window on screen
-        card.active = true; // Trigger slide-up animation
+        osdWindow.visible = true;
+        card.active = true;
         hideTimer.restart();
     }
 
@@ -22,32 +21,28 @@ PanelWindow {
     implicitWidth: 180
     implicitHeight: 180
     color: "transparent"
-    // Align horizontally in the center of the active monitor screen
     margins.left: screen ? (screen.width - implicitWidth) / 2 : 0
     WlrLayershell.exclusiveZone: 0
     WlrLayershell.layer: WlrLayershell.Overlay
-    // Start completely invisible (unmapped by Wayland compositor, click-through)
     visible: false
 
     Timer {
         id: hideTimer
 
-        interval: 1800 // Display for 1.8 seconds
+        interval: 1800
         repeat: false
         onTriggered: {
-            card.active = false; // Slide down
-            dismissTimer.start(); // Wait for slide animation to finish before unmapping
+            card.active = false;
+            dismissTimer.start();
         }
     }
 
     Timer {
         id: dismissTimer
 
-        interval: 350 // Matches slide-down transition duration
+        interval: 350
         repeat: false
-        onTriggered: {
-            osdWindow.visible = false; // Unmap window (completely click-through again)
-        }
+        onTriggered: osdWindow.visible = false
     }
 
     Rectangle {
@@ -62,37 +57,32 @@ PanelWindow {
         border.color: Style.surface1
         border.width: 1
         anchors.horizontalCenter: parent.horizontalCenter
-        // Slide & fade positioning (floats 52px above screen edge)
         y: active ? 20 : 100
         opacity: active ? 1 : 0
 
         Row {
-            // Percentage Label
-
             anchors.centerIn: parent
             spacing: 6
 
-            // Volume Icon
             Text {
                 text: {
-                    if (osdWindow.isMuted || osdWindow.currentVolume <= 0)
-                        return "volume_off";
+                    if (osdWindow.currentBrightness <= 0)
+                        return "brightness_low";
 
-                    if (osdWindow.currentVolume < 33)
-                        return "volume_down";
+                    if (osdWindow.currentBrightness < 33)
+                        return "brightness_low";
 
-                    if (osdWindow.currentVolume < 66)
-                        return "volume_down";
+                    if (osdWindow.currentBrightness < 66)
+                        return "brightness_medium";
 
-                    return "volume_up";
+                    return "brightness_high";
                 }
-                color: osdWindow.isMuted ? Style.red : Style.mauve
+                color: Style.yellow
                 font.family: "Material Symbols Rounded"
                 font.pixelSize: 20
                 verticalAlignment: Text.AlignVCenter
             }
 
-            // Progress Bar Track
             Rectangle {
                 width: 130
                 height: 4
@@ -101,10 +91,10 @@ PanelWindow {
                 anchors.verticalCenter: parent.verticalCenter
 
                 Rectangle {
+                    width: parent.width * (osdWindow.currentBrightness / 100)
                     height: parent.height
                     radius: 2
-                    color: osdWindow.isMuted ? Style.overlay1 : Style.mauve
-                    width: parent.width * (osdWindow.currentVolume / 100)
+                    color: Style.yellow
 
                     Behavior on width {
                         NumberAnimation {
