@@ -1,0 +1,12 @@
+singleton Style 1.0 Style.qml
+Clock 1.0 Clock.qml
+Workspaces 1.0 Workspaces.qml
+Process 1.0 Process.qml
+Memory 1.0 Memory.qml
+Network 1.0 Network.qml
+WallpaperButton 1.0 WallpaperButton.qml
+Player 1.0 Player.qml
+Volume 1.0 Volume.qml
+Brightness 1.0 Brightness.qml
+WifiIcon 1.0 WifiIcon.qml
+Battery 1.0 Battery.qml
