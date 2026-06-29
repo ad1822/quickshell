@@ -81,15 +81,6 @@ PanelWindow {
             id: barBatteryWidget
 
             height: parent.height
-            onHovered: (isHovered) => {
-                if (isHovered) {
-                    battCloseTimer.stop();
-                    battOpenTimer.start();
-                } else {
-                    battOpenTimer.stop();
-                    battCloseTimer.start();
-                }
-            }
         }
 
         WifiIcon {
@@ -457,40 +448,7 @@ PanelWindow {
         source: "../components/popout/WifiPopup.qml"
     }
 
-    // --- Battery Popup Timers & Loader ---
-    Timer {
-        id: battOpenTimer
 
-        interval: 300
-        repeat: false
-        onTriggered: {
-            battCloseTimer.stop();
-            if (battPopupLoader.active && battPopupLoader.item)
-                battPopupLoader.item.cancelClose();
-            else
-                battPopupLoader.active = true;
-        }
-    }
-
-    Timer {
-        id: battCloseTimer
-
-        interval: 200
-        repeat: false
-        onTriggered: {
-            if (battPopupLoader.item)
-                battPopupLoader.item.closePopup();
-            else
-                battPopupLoader.active = false;
-        }
-    }
-
-    Loader {
-        id: battPopupLoader
-
-        active: false
-        source: "../components/popout/BattPopup.qml"
-    }
 
     // --- Player Popup Timers & Loader ---
     Timer {
