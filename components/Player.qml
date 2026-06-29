@@ -26,16 +26,16 @@ Item {
     readonly property string playerName: activePlayer ? activePlayer.identity : ""
     // Counter to generate unique cache-bypassing filenames for curl
     property int artCounter: 0
-    // Exposed local art URL that is 100% safe from Qt SSL bugs and caching issues
+    // Exposed local art URL that is safe from caching issues
     property string localArtUrl: ""
     readonly property bool isPlaying: activePlayer ? activePlayer.isPlaying : false
     // Position and Length (in seconds)
     readonly property double position: activePlayer ? activePlayer.position : 0
     readonly property double length: activePlayer ? activePlayer.length : 0
-    // Track metadata caching to handle partial browser MPRIS updates
+    // Track metadata caching
     property string lastTitle: ""
     property string lastArtist: ""
-    // Pure declarative raw artwork source URL (monitored by QML binding engine)
+    // Pure declarative raw artwork source URL
     readonly property string rawArtUrl: {
         if (!activePlayer)
             return "";
@@ -58,6 +58,13 @@ Item {
     function togglePlay() {
         if (activePlayer && activePlayer.canTogglePlaying)
             activePlayer.togglePlaying();
+
+    }
+
+    // Seek control functions
+    function seekTo(seconds) {
+        if (activePlayer && activePlayer.canSeek)
+            activePlayer.position = seconds;
 
     }
 
@@ -90,7 +97,7 @@ Item {
         return "";
     }
 
-    // Upgrade image sizes to high-resolution (bypasses low-res defaults from YT Music/YouTube)
+    // Upgrade image sizes to high-resolution
     function upgradeArtUrlQuality(url) {
         if (!url)
             return "";
@@ -99,14 +106,10 @@ Item {
         if (url === "")
             return "";
 
-        // Upgrade Google User Content / Ggpht cover art sizes (used by YT Music)
         if (url.indexOf("googleusercontent.com") !== -1 || url.indexOf("ggpht.com") !== -1) {
-            // Replace =w120-h120 size parameters with high-res =w544-h544
             url = url.replace(/=w\d+-h\d+/, "=w544-h544");
-            // Replace =s120 square parameters with high-res =s512
             url = url.replace(/=s\d+/, "=s512");
         }
-        // Upgrade YouTube watch thumbnails to maxresdefault (HD)
         if (url.indexOf("img.youtube.com/vi/") !== -1)
             url = url.replace(/\/[^\/]+\.jpg$/, "/maxresdefault.jpg");
 
@@ -118,25 +121,20 @@ Item {
         var currentTitle = title.trim();
         var currentArtist = artist.trim();
         var currentRawArt = rawArtUrl.trim();
-        // If the song has changed, reset the artwork
         if (currentTitle !== lastTitle || currentArtist !== lastArtist) {
             lastTitle = currentTitle;
             lastArtist = currentArtist;
             localArtUrl = "";
         }
-        // If the new rawArtUrl is empty but we already have a loaded artwork for this song,
-        // preserve it rather than overwriting with empty
         if (currentRawArt === "")
             return ;
 
-        // Upgrade artwork quality parameter before downloading
         var highResUrl = upgradeArtUrlQuality(currentRawArt);
         if (highResUrl.indexOf("http://") === 0 || highResUrl.indexOf("https://") === 0) {
             artCounter++;
             downloadArtProc.command = ["curl", "-L", "-s", "-o", "/tmp/quickshell_art_" + artCounter + ".jpg", highResUrl];
             downloadArtProc.running = true;
         } else {
-            // Already a local path or file:// URL
             localArtUrl = highResUrl;
         }
     }
@@ -148,7 +146,7 @@ Item {
     implicitHeight: rowLayout.implicitHeight
     width: implicitWidth
     height: implicitHeight
-    visible: true
+    visible: activePlayer !== null
 
     // Process helper to run curl in the background
     Process {
@@ -181,21 +179,122 @@ Item {
         id: rowLayout
 
         anchors.fill: parent
-        spacing: 6
+        spacing: 8
 
-        // Icon indicating status
-        Text {
-            text: {
-                if (playerWidget.activePlayer === null)
-                    return "music_off";
+        // Premium Animated Music Visualizer (Bounces when playing, freezes when paused)
+        Row {
+            id: miniVisualizer
 
-                return playerWidget.isPlaying ? "music_note" : "music_off";
+            spacing: 2
+            anchors.verticalCenter: parent.verticalCenter
+            height: 12
+            width: 10
+
+            Rectangle {
+                id: bar1
+
+                width: 2
+                height: 4
+                radius: 1
+                color: Style.mauve
+                anchors.bottom: parent.bottom
+
+                SequentialAnimation {
+                    running: playerWidget.isPlaying
+                    loops: Animation.Infinite
+
+                    NumberAnimation {
+                        target: bar1
+                        property: "height"
+                        from: 3
+                        to: 12
+                        duration: 400
+                        easing.type: Easing.InOutSine
+                    }
+
+                    NumberAnimation {
+                        target: bar1
+                        property: "height"
+                        from: 12
+                        to: 3
+                        duration: 350
+                        easing.type: Easing.InOutSine
+                    }
+
+                }
+
             }
-            color: Style.mauve
-            font.family: "Material Symbols Rounded"
-            font.pixelSize: Style.fontSize
-            font.weight: Style.fontWeight
-            verticalAlignment: Text.AlignVCenter
+
+            Rectangle {
+                id: bar2
+
+                width: 2
+                height: 6
+                radius: 1
+                color: Style.pink
+                anchors.bottom: parent.bottom
+
+                SequentialAnimation {
+                    running: playerWidget.isPlaying
+                    loops: Animation.Infinite
+
+                    NumberAnimation {
+                        target: bar2
+                        property: "height"
+                        from: 4
+                        to: 11
+                        duration: 300
+                        easing.type: Easing.InOutSine
+                    }
+
+                    NumberAnimation {
+                        target: bar2
+                        property: "height"
+                        from: 11
+                        to: 4
+                        duration: 450
+                        easing.type: Easing.InOutSine
+                    }
+
+                }
+
+            }
+
+            Rectangle {
+                id: bar3
+
+                width: 2
+                height: 3
+                radius: 1
+                color: Style.blue
+                anchors.bottom: parent.bottom
+
+                SequentialAnimation {
+                    running: playerWidget.isPlaying
+                    loops: Animation.Infinite
+
+                    NumberAnimation {
+                        target: bar3
+                        property: "height"
+                        from: 2
+                        to: 10
+                        duration: 500
+                        easing.type: Easing.InOutSine
+                    }
+
+                    NumberAnimation {
+                        target: bar3
+                        property: "height"
+                        from: 10
+                        to: 2
+                        duration: 300
+                        easing.type: Easing.InOutSine
+                    }
+
+                }
+
+            }
+
         }
 
         // Song Title & Artist text
@@ -207,7 +306,7 @@ Item {
             font.weight: Style.fontWeight
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
-            width: Math.min(implicitWidth, 200)
+            width: Math.min(implicitWidth, 180)
         }
 
     }
