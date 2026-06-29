@@ -1,98 +1,148 @@
 import QtQuick
+import QtQuick.Shapes
 import Quickshell.Hyprland
+import "../components"
 
 Rectangle {
-  id: root
-  width: row.width + 16
-  height: row.height + 16
-  color: Style.base
-  radius: 6
+    id: root
 
-  Row {
-    id: row
-    spacing: 8
-    anchors.centerIn: parent
+    width: row.width + 20
+    height: row.height + 12
+    color: Style.base
+    radius: 6
 
-    Repeater {
-      model: 4
+    Item {
+        id: container
 
-      Rectangle {
-        width: 25
-        height: 20
-        radius: 2
+        anchors.centerIn: parent
+        width: row.width
+        height: row.height
 
-        property var ws: Hyprland.workspaces.values.find(w => w.id === index + 1)
-        property bool isActive: Hyprland.focusedWorkspace?.id === (index + 1)
-        property bool hasWindows: ws !== undefined
+        property int activeIndex: Hyprland.focusedWorkspace ? (Hyprland.focusedWorkspace.id - 1) : 0
 
-        color: {
-          // if (isActive) return Style.mauve;
-          // if (mouseArea.containsMouse) return Style.maroon;
-          return "transparent";
-        }
-
-        Behavior on color {
-          ColorAnimation { duration: 150 }
-        }
-
-        border.color: {
-          if (isActive) return "transparent";
-          return Style.text;
-        }
-
-        border.width: 0
+        // 1. The Active Sliding Indicator
         Rectangle {
-          width: 30
-          height: 24
-          color: "transparent"
+            id: activeIndicator
 
-          Rectangle {
-            anchors {
-              left: parent.left
-              right: parent.right
-              bottom: parent.bottom
+            height: 6
+            radius: 3
+            color: Style.mauve
+            anchors.verticalCenter: parent.verticalCenter
+
+            // Bindings to match the active dot wrapper's position and width dynamically
+            x: {
+                var activeChild = repeater.itemAt(container.activeIndex);
+                return activeChild ? activeChild.x : 0;
+            }
+            width: {
+                var activeChild = repeater.itemAt(container.activeIndex);
+                return activeChild ? activeChild.width : 24;
             }
 
-            height: 1.5
-            color: {
-              if (isActive) return Style.mauve;
-              if (mouseArea.containsMouse) return Style.maroon;
-              return "transparent";
+            // Spring slide animation
+            Behavior on x {
+                NumberAnimation {
+                    duration: 350
+                    easing.type: Easing.OutBack
+                    easing.overshoot: 0.4
+                }
             }
-            radius: 0
-          }
+
+            // Smooth scale/stretch animation
+            Behavior on width {
+                NumberAnimation {
+                    duration: 250
+                    easing.type: Easing.OutQuad
+                }
+            }
         }
 
+        // 2. The Workspace Dots Row
+        Row {
+            id: row
 
-        Text {
-          anchors.centerIn: parent
-          text: index
-          color: {
-            if (isActive) return Style.text;
-            if (mouseArea.containsMouse) return Style.text;
-            if (hasWindows) return Style.text;
-            return Style.overlay1;
-          }
+            spacing: 8
+            anchors.verticalCenter: parent.verticalCenter
+            height: 12
 
-          font {
-            family: Style.fontFamily
-            pixelSize: 12
-            bold: isActive || hasWindows
-          }
+            Repeater {
+                id: repeater
+                model: 4
 
-          Behavior on color {
-            ColorAnimation { duration: 150 }
-          }
+                Item {
+                    id: dotWrapper
+
+                    // Wrapper width changes based on state to push siblings
+                    width: isActive ? 30 : (hasWindows ? 10 : 6)
+                    height: 12
+
+                    property var ws: Hyprland.workspaces.values.find(w => w.id === index + 1)
+                    property bool isActive: Hyprland.focusedWorkspace?.id === (index + 1)
+                    property bool hasWindows: ws !== undefined
+
+                    // Smooth layout adjustment when width changes
+                    Behavior on width {
+                        NumberAnimation {
+                            duration: 250
+                            easing.type: Easing.OutQuad
+                        }
+                    }
+
+                    // Dot Rectangle
+                    Rectangle {
+                        id: dotItem
+
+                        anchors.centerIn: parent
+                        height: 6
+                        width: isActive ? 24 : (hasWindows ? 10 : 6)
+                        radius: 3
+
+                        color: {
+                            if (isActive) return "transparent"; // Let activeIndicator show through
+                            if (hasWindows) return Style.text;
+                            return Style.overlay0;
+                        }
+
+                        opacity: dotMouse.containsMouse ? 1.0 : (isActive ? 1.0 : (hasWindows ? 0.8 : 0.4))
+
+                        Behavior on color {
+                            ColorAnimation { duration: 200 }
+                        }
+
+                        Behavior on opacity {
+                            NumberAnimation { duration: 200 }
+                        }
+
+                        Behavior on width {
+                            NumberAnimation { duration: 250; easing.type: Easing.OutQuad }
+                        }
+                    }
+
+                    // Hover number text overlay
+                    Text {
+                        anchors.centerIn: parent
+                        text: index + 1
+                        color: isActive ? Style.base : Style.text
+                        font.family: Style.fontFamily
+                        font.pixelSize: 8
+                        font.weight: Font.Bold
+                        opacity: dotMouse.containsMouse ? 1.0 : 0.0
+
+                        Behavior on opacity {
+                            NumberAnimation { duration: 150 }
+                        }
+                    }
+
+                    MouseArea {
+                        id: dotMouse
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Hyprland.dispatch("workspace " + (index + 1))
+                    }
+                }
+            }
         }
-
-        MouseArea {
-          id: mouseArea
-          anchors.fill: parent
-          hoverEnabled: true
-          cursorShape: Qt.PointingHandCursor
-          onClicked: Hyprland.dispatch("workspace " + (index + 1))
-        }
-      }
     }
-  }
 }

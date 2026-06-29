@@ -229,19 +229,121 @@ PanelWindow {
 
     }
 
-    // --- Hamburger Button ---
-    Text {
+    // --- Hamburger Button Card ---
+    Rectangle {
         id: hamburgerButton
 
         anchors.left: workspacesWidget.right
-        anchors.leftMargin: 15
+        anchors.leftMargin: 8
         anchors.verticalCenter: parent.verticalCenter
-        text: barWindow.modulesExpanded ? "menu_open" : "menu"
-        color: hamburgerMouse.containsMouse ? Style.text : (barWindow.modulesExpanded ? Style.overlay2 : Style.overlay1)
-        font.family: "Material Symbols Rounded"
-        font.pixelSize: 18
-        font.bold: true
+        width: 24
+        height: 24
+        radius: 6
+        color: hamburgerMouse.containsMouse ? Style.surface0 : Style.base
+        border.color: Style.surface1
+        border.width: 0
         opacity: barWindow.barExpanded ? 1 : 0
+
+        // Centered morphing vector lines
+        Item {
+            anchors.centerIn: parent
+            width: 12
+            height: 12
+
+            // Top Line
+            Rectangle {
+                id: topLine
+
+                width: 12
+                height: 1.5
+                radius: 0.75
+                color: Style.text
+                x: 0
+                y: barWindow.modulesExpanded ? 6 : 3
+                transformOrigin: Item.Center
+                rotation: barWindow.modulesExpanded ? 45 : 0
+
+                Behavior on y {
+                    NumberAnimation {
+                        duration: 250
+                        easing.type: Easing.OutQuad
+                    }
+
+                }
+
+                Behavior on rotation {
+                    NumberAnimation {
+                        duration: 250
+                        easing.type: Easing.OutBack
+                        easing.overshoot: 1
+                    }
+
+                }
+
+            }
+
+            // Middle Line
+            Rectangle {
+                id: middleLine
+
+                width: barWindow.modulesExpanded ? 0 : 12
+                height: 1.5
+                radius: 0.75
+                color: Style.text
+                x: 0
+                y: 6
+                opacity: barWindow.modulesExpanded ? 0 : 1
+
+                Behavior on width {
+                    NumberAnimation {
+                        duration: 200
+                        easing.type: Easing.OutQuad
+                    }
+
+                }
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 200
+                    }
+
+                }
+
+            }
+
+            // Bottom Line
+            Rectangle {
+                id: bottomLine
+
+                width: 12
+                height: 1.5
+                radius: 0.75
+                color: Style.text
+                x: 0
+                y: barWindow.modulesExpanded ? 6 : 9
+                transformOrigin: Item.Center
+                rotation: barWindow.modulesExpanded ? -45 : 0
+
+                Behavior on y {
+                    NumberAnimation {
+                        duration: 250
+                        easing.type: Easing.OutQuad
+                    }
+
+                }
+
+                Behavior on rotation {
+                    NumberAnimation {
+                        duration: 250
+                        easing.type: Easing.OutBack
+                        easing.overshoot: 1
+                    }
+
+                }
+
+            }
+
+        }
 
         MouseArea {
             id: hamburgerMouse
@@ -250,6 +352,13 @@ PanelWindow {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: barWindow.modulesExpanded = !barWindow.modulesExpanded
+        }
+
+        Behavior on color {
+            ColorAnimation {
+                duration: 150
+            }
+
         }
 
         Behavior on opacity {
