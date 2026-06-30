@@ -23,6 +23,10 @@ ShellRoot {
         id: brightnessOsd
     }
 
+    Spotlight {
+        id: spotlightWindow
+    }
+
     Connections {
         target: barWindow.volumeWidget
 

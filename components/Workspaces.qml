@@ -7,8 +7,8 @@ Rectangle {
     id: root
 
     width: row.width + 20
-    height: row.height + 12
-    color: Style.base
+    height: row.height + 20
+    color: Style.mantle
     radius: 6
 
     Item {
@@ -26,7 +26,7 @@ Rectangle {
 
             height: 6
             radius: 3
-            color: Style.mauve
+            color: Style.blue
             anchors.verticalCenter: parent.verticalCenter
 
             // Bindings to match the active dot wrapper's position and width dynamically
@@ -36,7 +36,7 @@ Rectangle {
             }
             width: {
                 var activeChild = repeater.itemAt(container.activeIndex);
-                return activeChild ? activeChild.width : 24;
+                return activeChild ? activeChild.width : 40;
             }
 
             // Spring slide animation
@@ -73,7 +73,7 @@ Rectangle {
                     id: dotWrapper
 
                     // Wrapper width changes based on state to push siblings
-                    width: isActive ? 30 : (hasWindows ? 10 : 6)
+                    width: isActive ? 40 : (hasWindows ? 10 : 6)
                     height: 12
 
                     property var ws: Hyprland.workspaces.values.find(w => w.id === index + 1)
@@ -139,7 +139,7 @@ Rectangle {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: Hyprland.dispatch("workspace " + (index + 1))
+                        onClicked: Hyprland.dispatch("hl.dsp.focus({ workspace = " + (index + 1) + " })")
                     }
                 }
             }

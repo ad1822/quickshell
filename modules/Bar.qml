@@ -11,7 +11,6 @@ PanelWindow {
 
     property bool modulesExpanded: false
     property bool barExpanded: false
-
     property alias volumeWidget: barVolumeWidget
     property alias brightnessWidget: barBrightnessWidget
 
@@ -201,7 +200,7 @@ PanelWindow {
         id: workspacesWidget
 
         anchors.left: parent.left
-        anchors.leftMargin: barWindow.barExpanded ? 8 : -300
+        anchors.leftMargin: barWindow.barExpanded ? 0 : -300
         anchors.verticalCenter: parent.verticalCenter
         opacity: barWindow.barExpanded ? 1 : 0
 
@@ -230,10 +229,11 @@ PanelWindow {
         anchors.left: workspacesWidget.right
         anchors.leftMargin: 8
         anchors.verticalCenter: parent.verticalCenter
-        width: 24
-        height: 24
+        width: 30
+        height: 30
         radius: 6
-        color: hamburgerMouse.containsMouse ? Style.surface0 : Style.base
+        color: "transparent"
+        // color: hamburgerMouse.containsMouse ? Style.surface0 : Style.base
         border.color: Style.surface1
         border.width: 0
         opacity: barWindow.barExpanded ? 1 : 0
