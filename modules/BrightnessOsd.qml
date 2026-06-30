@@ -2,6 +2,7 @@ import "../components"
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Hyprland
 
 PanelWindow {
     id: osdWindow
@@ -9,6 +10,14 @@ PanelWindow {
     property int currentBrightness: 0
 
     function trigger(brightness) {
+        if (Quickshell.screens && Hyprland.focusedMonitor) {
+            for (var i = 0; i < Quickshell.screens.length; i++) {
+                if (Quickshell.screens[i].name === Hyprland.focusedMonitor.name) {
+                    osdWindow.screen = Quickshell.screens[i];
+                    break;
+                }
+            }
+        }
         currentBrightness = brightness;
         dismissTimer.stop();
         osdWindow.visible = true;

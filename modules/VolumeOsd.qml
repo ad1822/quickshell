@@ -2,6 +2,7 @@ import "../components"
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Hyprland
 
 PanelWindow {
     id: osdWindow
@@ -10,6 +11,14 @@ PanelWindow {
     property bool isMuted: false
 
     function trigger(vol, muted) {
+        if (Quickshell.screens && Hyprland.focusedMonitor) {
+            for (var i = 0; i < Quickshell.screens.length; i++) {
+                if (Quickshell.screens[i].name === Hyprland.focusedMonitor.name) {
+                    osdWindow.screen = Quickshell.screens[i];
+                    break;
+                }
+            }
+        }
         currentVolume = vol;
         isMuted = muted;
         dismissTimer.stop();

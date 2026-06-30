@@ -10,6 +10,7 @@ Rectangle {
 
     signal clicked()
     signal hovered(bool isHovered)
+    property bool transparentBg: false
 
     function getBatteryIcon(percentage, isCharging) {
         var pct = Math.round(percentage * 100);
@@ -52,7 +53,7 @@ Rectangle {
     implicitHeight: 30
     radius: 0
     color: {
-        if (!battRoot.isLaptopBattery)
+        if (battRoot.transparentBg || !battRoot.isLaptopBattery)
             return "transparent";
 
         var pct = Math.round(battRoot.percentage * 100);
@@ -85,7 +86,16 @@ Rectangle {
                 else
                     return battRoot.getBatteryIcon(battRoot.percentage, battRoot.isCharging);
             }
-            color: !battRoot.isLaptopBattery ? Style.text : Style.crust
+            color: {
+                if (battRoot.transparentBg) {
+                    var pct = Math.round(battRoot.percentage * 100);
+                    if (pct <= 25) return Style.red;
+                    if (pct <= 50) return Style.peach;
+                    if (battRoot.isCharging) return Style.green;
+                    return Style.text;
+                }
+                return !battRoot.isLaptopBattery ? Style.text : Style.crust;
+            }
             font.family: "Material Symbols Rounded"
             font.pixelSize: Style.fontSize
             font.weight: Font.Bold
@@ -96,7 +106,16 @@ Rectangle {
 
             visible: battRoot.isLaptopBattery
             text: Math.round(battRoot.percentage * 100) + "%"
-            color: Style.crust
+            color: {
+                if (battRoot.transparentBg) {
+                    var pct = Math.round(battRoot.percentage * 100);
+                    if (pct <= 25) return Style.red;
+                    if (pct <= 50) return Style.peach;
+                    if (battRoot.isCharging) return Style.green;
+                    return Style.text;
+                }
+                return Style.crust;
+            }
             font.family: Style.fontFamily
             font.pixelSize: Style.fontSize
             font.weight: Font.Bold

@@ -5,30 +5,35 @@ import Quickshell
 import Quickshell.Io as QsIo
 import Quickshell.Services.UPower
 import Quickshell.Wayland
+import Quickshell.Widgets
+import Quickshell.Hyprland
 
 PanelWindow {
     id: barWindow
 
     property bool modulesExpanded: false
     property bool barExpanded: false
+    property bool isHovered: false
     property alias volumeWidget: barVolumeWidget
     property alias brightnessWidget: barBrightnessWidget
 
     anchors.top: true
     anchors.left: true
     anchors.right: true
-    implicitHeight: 30
+    implicitHeight: barWindow.barExpanded ? 30 : (barWindow.isHovered ? 64 : 30)
     margins.top: barWindow.barExpanded ? 0 : 4
     color: "transparent"
+    WlrLayershell.exclusiveZone: 30
 
     Rectangle {
         id: barBg
 
-        anchors.centerIn: parent
-        height: 30
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        height: barWindow.barExpanded ? 30 : (barWindow.isHovered ? 64 : 30)
         color: "#11111b"
-        width: barWindow.barExpanded ? parent.width : (barClock.width + 10)
-        radius: barWindow.barExpanded ? 0 : 6
+        width: barWindow.barExpanded ? parent.width : (barWindow.isHovered ? 360 : (barClock.width + 10))
+        radius: barWindow.barExpanded ? 0 : (barWindow.isHovered ? 12 : 6)
 
         Behavior on width {
             NumberAnimation {
@@ -36,7 +41,14 @@ PanelWindow {
                 easing.type: Easing.OutBack
                 easing.overshoot: 1
             }
+        }
 
+        Behavior on height {
+            NumberAnimation {
+                duration: 400
+                easing.type: Easing.OutBack
+                easing.overshoot: 1
+            }
         }
 
         Behavior on radius {
@@ -45,26 +57,229 @@ PanelWindow {
                 easing.type: Easing.OutBack
                 easing.overshoot: 1
             }
-
         }
 
-    }
-
-    Clock {
-        id: barClock
-
-        anchors.centerIn: barBg
-        height: barBg.height
-        barExpanded: barWindow.barExpanded
-
         MouseArea {
-            id: clockMouse
+            id: barMouseArea
 
             anchors.fill: parent
             hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: barWindow.barExpanded = !barWindow.barExpanded
+            onContainsMouseChanged: {
+                if (!barWindow.barExpanded)
+                    barWindow.isHovered = containsMouse;
+
+            }
+            onClicked: {
+                barWindow.barExpanded = !barWindow.barExpanded;
+                if (barWindow.barExpanded)
+                    barWindow.isHovered = false;
+                else
+                    barWindow.isHovered = containsMouse;
+            }
+
+            Clock {
+                id: barClock
+
+                anchors.centerIn: parent
+                height: parent.height
+                barExpanded: barWindow.barExpanded
+                opacity: (barWindow.barExpanded || (!barWindow.isHovered && barBg.width < 150)) ? 1 : 0
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 150
+                    }
+
+                }
+
+            }
+
+            // --- Hover State Expanded Content ---
+            Item {
+                id: hoverContent
+
+                anchors.fill: parent
+                opacity: (barWindow.isHovered && !barWindow.barExpanded && barBg.width > 220) ? 1 : 0
+                visible: opacity > 0
+
+                // Left Section: Active Window Icon Only
+                Item {
+                    id: activeWindowIconOnly
+                    anchors.left: parent.left
+                    anchors.leftMargin: 20
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 24
+                    height: 24
+
+                    // Application Icon
+                    IconImage {
+                        id: activeAppIcon
+                        anchors.fill: parent
+                        
+                        property var activeToplevel: null
+                        property string appClass: (activeToplevel && activeToplevel.lastIpcObject) ? activeToplevel.lastIpcObject.class : ""
+                        
+                        function getAppIconFromDesktop(appClass) {
+                            if (!appClass || !spotlightWindow || !spotlightWindow.allApps)
+                                return "";
+
+                            var query = appClass.toLowerCase();
+                            
+                            function getBinary(execStr) {
+                                if (!execStr) return "";
+                                var trimmed = execStr.trim();
+                                var firstWord = trimmed.split(" ")[0];
+                                var lastSlash = firstWord.lastIndexOf("/");
+                                if (lastSlash !== -1) {
+                                    return firstWord.substring(lastSlash + 1);
+                                }
+                                return firstWord;
+                            }
+
+                            // 1. Try exact binary name match
+                            for (var i = 0; i < spotlightWindow.allApps.length; i++) {
+                                var app = spotlightWindow.allApps[i];
+                                var binary = getBinary(app.exec).toLowerCase();
+                                if (binary === query) {
+                                    return app.icon;
+                                }
+                            }
+
+                            // 2. Try name match (case-insensitive)
+                            for (var i = 0; i < spotlightWindow.allApps.length; i++) {
+                                var app = spotlightWindow.allApps[i];
+                                if (app.name.toLowerCase() === query) {
+                                    return app.icon;
+                                }
+                            }
+
+                            // 3. Try loose binary prefix/substring match
+                            for (var i = 0; i < spotlightWindow.allApps.length; i++) {
+                                var app = spotlightWindow.allApps[i];
+                                var binary = getBinary(app.exec).toLowerCase();
+                                if (binary.indexOf(query) !== -1 || query.indexOf(binary) !== -1) {
+                                    return app.icon;
+                                }
+                            }
+
+                            return "";
+                        }
+
+                        source: {
+                            if (!appClass) return "";
+                            var cleanClass = appClass;
+                            if (cleanClass.indexOf(".") !== -1) {
+                                var parts = cleanClass.split(".");
+                                cleanClass = parts[parts.length - 1];
+                            }
+                            
+                            // Try finding the icon from desktop database first
+                            var desktopIcon = getAppIconFromDesktop(cleanClass);
+                            var icon = "";
+                            if (desktopIcon) {
+                                if (desktopIcon.indexOf("/") === 0) {
+                                    icon = "file://" + desktopIcon;
+                                } else {
+                                    icon = Quickshell.iconPath(desktopIcon);
+                                }
+                            }
+                            
+                            // Fallback to direct class lookup in the icon theme
+                            if (!icon) {
+                                var themeIcon = Quickshell.iconPath(appClass.toLowerCase());
+                                if (!themeIcon) themeIcon = Quickshell.iconPath(cleanClass.toLowerCase());
+                                if (!themeIcon) themeIcon = Quickshell.iconPath(appClass);
+                                if (!themeIcon) themeIcon = Quickshell.iconPath(cleanClass);
+                                if (themeIcon) {
+                                    icon = (themeIcon.toString().indexOf("/") === 0) ? "file://" + themeIcon : themeIcon;
+                                }
+                            }
+                            
+                            return icon;
+                        }
+                        
+                        visible: source !== "" && status === Image.Ready
+                    }
+
+                    // Fallback Text Icon
+                    Text {
+                        text: "desktop_windows"
+                        color: Style.lavender
+                        font.family: "Material Symbols Rounded"
+                        font.pixelSize: 22
+                        anchors.centerIn: parent
+                        visible: !activeAppIcon.visible
+                    }
+
+                    // Instantiator to track focus changes dynamically
+                    Instantiator {
+                        model: Hyprland.toplevels
+                        delegate: QtObject {
+                            property bool isActivated: modelData ? modelData.activated : false
+                            
+                            Component.onCompleted: {
+                                if (isActivated) {
+                                    activeAppIcon.activeToplevel = modelData;
+                                }
+                            }
+                            
+                            onIsActivatedChanged: {
+                                if (isActivated) {
+                                    activeAppIcon.activeToplevel = modelData;
+                                } else if (activeAppIcon.activeToplevel === modelData) {
+                                    activeAppIcon.activeToplevel = null;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Middle Section: Large Time & Date
+                Column {
+                    anchors.centerIn: parent
+                    spacing: 2
+
+                    Text {
+                        text: Qt.formatDateTime(barClock.currentTime, "HH:mm")
+                        color: Style.text
+                        font.family: Style.fontFamily
+                        font.pixelSize: 22
+                        font.weight: Font.Bold
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+
+                    Text {
+                        text: Qt.formatDateTime(barClock.currentTime, "dddd, MMMM d")
+                        color: Style.subtext0
+                        font.family: Style.fontFamily
+                        font.pixelSize: 11
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+
+                }
+
+                // Right Section: Battery Percentage
+                Battery {
+                    id: hoverBatteryWidget
+
+                    anchors.right: parent.right
+                    anchors.rightMargin: 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    transparentBg: true
+                }
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 150
+                    }
+
+                }
+
+            }
+
         }
+
+
 
     }
 
@@ -184,7 +399,6 @@ PanelWindow {
                 easing.type: Easing.OutBack
                 easing.overshoot: 1
             }
-
         }
 
         Behavior on opacity {
@@ -210,7 +424,6 @@ PanelWindow {
                 easing.type: Easing.OutBack
                 easing.overshoot: 1
             }
-
         }
 
         Behavior on opacity {
@@ -676,6 +889,10 @@ PanelWindow {
 
         active: false
         source: "../components/popout/NetPopup.qml"
+    }
+
+    mask: Region {
+        item: barBg
     }
 
 }
