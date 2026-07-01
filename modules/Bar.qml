@@ -89,7 +89,7 @@ PanelWindow {
                     height: 24
 
                     // Application Icon
-                    IconImage {
+                    Image {
                         id: activeAppIcon
 
                         property var activeToplevel: null
