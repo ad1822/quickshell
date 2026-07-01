@@ -1,5 +1,7 @@
 import "../../components"
+import Qt5Compat.GraphicalEffects
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Shapes
 import Quickshell
 
@@ -71,7 +73,7 @@ PopupWindow {
     anchor.window: barWindow
     // Center the 300px popup in the middle of the screen
     anchor.rect.x: (barWindow.width / 2) - 150
-    anchor.rect.y: barWindow.height
+    anchor.rect.y: barWindow.height + 2
     implicitWidth: 350
     implicitHeight: 115
     color: "transparent"
@@ -94,121 +96,6 @@ PopupWindow {
         anchors.fill: parent
 
         // Left Fillet (Inverted Border Corner)
-        Shape {
-            id: playerLeftFillet
-
-            width: 24
-            height: 24
-            anchors.right: playerPopupContent.left
-            anchors.top: playerPopupContent.top
-            opacity: playerPopupContent.opacity
-            visible: opacity > 0.01
-            layer.enabled: true
-            layer.samples: 4
-
-            ShapePath {
-                fillColor: Style.crust
-                strokeColor: "transparent"
-                startX: 0
-                startY: 0
-
-                PathLine {
-                    x: 24
-                    y: 0
-                }
-
-                PathLine {
-                    x: 24
-                    y: 24
-                }
-
-                PathArc {
-                    x: 0
-                    y: 0
-                    radiusX: 24
-                    radiusY: 24
-                    direction: PathArc.Counterclockwise
-                }
-
-            }
-
-            ShapePath {
-                fillColor: "transparent"
-                strokeColor: Style.crust
-                strokeWidth: 0
-                startX: 24
-                startY: 24
-
-                PathArc {
-                    x: 0
-                    y: 0
-                    radiusX: 24
-                    radiusY: 24
-                    direction: PathArc.Counterclockwise
-                }
-
-            }
-
-        }
-
-        // Right Fillet (Inverted Border Corner)
-        Shape {
-            id: playerRightFillet
-
-            width: 24
-            height: 24
-            anchors.left: playerPopupContent.right
-            anchors.top: playerPopupContent.top
-            opacity: playerPopupContent.opacity
-            visible: opacity > 0.01
-            layer.enabled: true
-            layer.samples: 4
-
-            ShapePath {
-                fillColor: Style.crust
-                strokeColor: "transparent"
-                startX: 24
-                startY: 0
-
-                PathLine {
-                    x: 0
-                    y: 0
-                }
-
-                PathLine {
-                    x: 0
-                    y: 24
-                }
-
-                PathArc {
-                    x: 24
-                    y: 0
-                    radiusX: 24
-                    radiusY: 24
-                    direction: PathArc.Clockwise
-                }
-
-            }
-
-            ShapePath {
-                fillColor: "transparent"
-                strokeColor: Style.crust
-                strokeWidth: 0
-                startX: 0
-                startY: 24
-
-                PathArc {
-                    x: 24
-                    y: 0
-                    radiusX: 24
-                    radiusY: 24
-                    direction: PathArc.Clockwise
-                }
-
-            }
-
-        }
-
         Item {
             id: playerPopupContent
 
@@ -219,37 +106,57 @@ PopupWindow {
             clip: true
             opacity: 0
 
-            // Base Card background
-            Rectangle {
-                id: playerPopupBg
+            // Masked background container to shape blurred artwork and crust base
+            Item {
+                id: backgroundContainer
 
-                anchors.top: parent.top
-                anchors.topMargin: -24
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                radius: 24
-                color: Style.crust
-                border.color: Style.surface1
-                border.width: 0
-            }
+                anchors.fill: parent
+                layer.enabled: true
 
-            // Left border mask
-            Rectangle {
-                anchors.left: parent.left
-                anchors.top: parent.top
-                width: 2
-                height: 24
-                color: Style.crust
-            }
+                // Base crust color
+                Rectangle {
+                    anchors.fill: parent
+                    color: Style.crust
+                }
 
-            // Right border mask
-            Rectangle {
-                anchors.right: parent.right
-                anchors.top: parent.top
-                width: 2
-                height: 24
-                color: Style.crust
+                // Blurred Album Art Background
+                Image {
+                    id: bgArtImage
+
+                    anchors.fill: parent
+                    source: (playerWidget.localArtUrl !== "") ? playerWidget.localArtUrl : ""
+                    fillMode: Image.PreserveAspectCrop
+                    visible: false
+                    asynchronous: true
+                }
+
+                MultiEffect {
+                    anchors.fill: parent
+                    source: bgArtImage
+                    blurEnabled: true
+                    blur: 0.6
+                    opacity: 0.8
+                    visible: playerWidget.localArtUrl !== ""
+                }
+
+                // Dark overlay to ensure text contrast
+                Rectangle {
+                    anchors.fill: parent
+                    color: "#aa0c0c0f"
+                    visible: playerWidget.localArtUrl !== ""
+                }
+
+                layer.effect: OpacityMask {
+
+                    maskSource: Rectangle {
+                        width: backgroundContainer.width
+                        height: backgroundContainer.height + 24
+                        y: -24
+                        radius: 24
+                    }
+
+                }
+
             }
 
             MouseArea {
@@ -280,40 +187,162 @@ PopupWindow {
                 spacing: 8
                 anchors.verticalCenter: parent.verticalCenter
 
-                // Title & Artist Row
-                Column {
+                // Top / Middle Row: Title, Artist and Play/Pause Button
+                Row {
                     width: parent.width
-                    spacing: 1
+                    height: 52
 
-                    Text {
-                        text: playerWidget.title
-                        color: Style.text
-                        font.family: Style.fontFamily
-                        font.pixelSize: 13
-                        font.bold: true
-                        width: parent.width
-                        elide: Text.ElideRight
+                    // Song Info Column
+                    Column {
+                        width: parent.width - 44
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 2
+
+                        // Speaker / Player Label
+                        Row {
+                            spacing: 4
+
+                            Text {
+                                text: "volume_up"
+                                color: Style.subtext1
+                                font.family: "Material Symbols Rounded"
+                                font.pixelSize: 12
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            Text {
+                                text: playerWidget.playerName !== "" ? playerWidget.playerName : "Media Player"
+                                color: Style.subtext1
+                                font.family: Style.fontFamily
+                                font.pixelSize: 9
+                                font.bold: true
+                                anchors.verticalCenter: parent.verticalCenter
+                                elide: Text.ElideRight
+                                width: 180
+                            }
+
+                        }
+
+                        Text {
+                            text: playerWidget.title
+                            color: Style.text
+                            font.family: Style.fontFamily
+                            font.pixelSize: 14
+                            font.bold: true
+                            width: parent.width
+                            elide: Text.ElideRight
+                        }
+
+                        Text {
+                            text: playerWidget.artist
+                            color: Style.subtext0
+                            font.family: Style.fontFamily
+                            font.pixelSize: 11
+                            width: parent.width
+                            elide: Text.ElideRight
+                            visible: playerWidget.artist !== ""
+                        }
+
                     }
 
-                    Text {
-                        text: playerWidget.artist
-                        color: Style.subtext0
-                        font.family: Style.fontFamily
-                        font.pixelSize: 11
-                        width: parent.width
-                        elide: Text.ElideRight
-                        visible: playerWidget.artist !== ""
+                    // Play Button Circle on Right
+                    Item {
+                        width: 44
+                        height: 44
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        Rectangle {
+                            id: playBtnCard
+
+                            width: 36
+                            height: 36
+                            radius: 18
+                            color: playMouse.containsMouse ? "#f5e0dc" : "#ffffff"
+                            scale: playMouse.containsMouse ? 1.08 : 1
+                            anchors.centerIn: parent
+
+                            Text {
+                                text: playerWidget.isPlaying ? "pause" : "play_arrow"
+                                color: "#11111b"
+                                font.family: "Material Symbols Rounded"
+                                font.pixelSize: 18
+                                anchors.centerIn: parent
+                            }
+
+                            MouseArea {
+                                id: playMouse
+
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: playerWidget.togglePlay()
+                            }
+
+                            Behavior on scale {
+                                NumberAnimation {
+                                    duration: 150
+                                    easing.type: Easing.OutBack
+                                }
+
+                            }
+
+                        }
+
                     }
 
                 }
 
-                // Progress Bar & Stamps Row
+                // Bottom Row: Controls & Progress Bar
                 Row {
                     width: parent.width
-                    spacing: 12
+                    height: 24
+                    spacing: 8
 
+                    // Skip Back
                     Item {
-                        width: parent.width - timeText.implicitWidth - 12
+                        width: 24
+                        height: 24
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        Text {
+                            text: "skip_previous"
+                            color: prevMouse.containsMouse ? Style.mauve : Style.text
+                            font.family: "Material Symbols Rounded"
+                            font.pixelSize: 18
+                            anchors.centerIn: parent
+                            scale: prevMouse.containsMouse ? 1.1 : 1
+
+                            Behavior on scale {
+                                NumberAnimation {
+                                    duration: 150
+                                    easing.type: Easing.OutQuad
+                                }
+
+                            }
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: 150
+                                }
+
+                            }
+
+                        }
+
+                        MouseArea {
+                            id: prevMouse
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: playerWidget.prevTrack()
+                        }
+
+                    }
+
+                    // Progress Track Bar
+                    Item {
+                        width: parent.width - 64
                         height: 8
                         anchors.verticalCenter: parent.verticalCenter
 
@@ -354,103 +383,19 @@ PopupWindow {
 
                     }
 
-                    // Time stamps
-                    Text {
-                        id: timeText
-
-                        // text: playerPopup.formatTime(playerWidget.position) + " / " + playerPopup.formatTime(playerWidget.length)
-                        color: Style.subtext0
-                        font.family: Style.fontFamily
-                        font.pixelSize: 10
+                    // Skip Forward
+                    Item {
+                        width: 24
+                        height: 24
                         anchors.verticalCenter: parent.verticalCenter
-                    }
 
-                }
-
-                // Playback Buttons Row (Aligned Right)
-                Item {
-                    width: parent.width
-                    height: 28
-
-                    Row {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 12
-
-                        // Skip Back
-                        Item {
-                            width: 24
-                            height: 24
-
-                            Text {
-                                text: "skip_previous"
-                                color: prevMouse.containsMouse ? Style.mauve : Style.text
-                                font.family: "Material Symbols Rounded"
-                                font.pixelSize: 18
-                                anchors.centerIn: parent
-                                scale: prevMouse.containsMouse ? 1.1 : 1
-
-                                Behavior on scale {
-                                    NumberAnimation {
-                                        duration: 150
-                                        easing.type: Easing.OutQuad
-                                    }
-
-                                }
-
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: 150
-                                    }
-
-                                }
-
-                            }
-
-                            MouseArea {
-                                id: prevMouse
-
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: playerWidget.prevTrack()
-                            }
-
-                        }
-
-                        // Circular highlighted Play/Pause
-                        Rectangle {
-                            id: playBtnCard
-
-                            width: 24
-                            height: 24
-                            radius: 12
-                            color: playMouse.containsMouse ? Style.pink : Style.mauve
-                            scale: playMouse.containsMouse ? 1.1 : 1
-
-                            Text {
-                                text: playerWidget.isPlaying ? "pause" : "play_arrow"
-                                color: Style.base
-                                font.family: "Material Symbols Rounded"
-                                font.pixelSize: 15
-                                anchors.centerIn: parent
-                            }
-
-                            MouseArea {
-                                id: playMouse
-
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: playerWidget.togglePlay()
-                            }
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: 150
-                                }
-
-                            }
+                        Text {
+                            text: "skip_next"
+                            color: nextMouse.containsMouse ? Style.mauve : Style.text
+                            font.family: "Material Symbols Rounded"
+                            font.pixelSize: 18
+                            anchors.centerIn: parent
+                            scale: nextMouse.containsMouse ? 1.1 : 1
 
                             Behavior on scale {
                                 NumberAnimation {
@@ -460,47 +405,22 @@ PopupWindow {
 
                             }
 
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: 150
+                                }
+
+                            }
+
                         }
 
-                        // Skip Forward
-                        Item {
-                            width: 24
-                            height: 24
+                        MouseArea {
+                            id: nextMouse
 
-                            Text {
-                                text: "skip_next"
-                                color: nextMouse.containsMouse ? Style.mauve : Style.text
-                                font.family: "Material Symbols Rounded"
-                                font.pixelSize: 18
-                                anchors.centerIn: parent
-                                scale: nextMouse.containsMouse ? 1.1 : 1
-
-                                Behavior on scale {
-                                    NumberAnimation {
-                                        duration: 150
-                                        easing.type: Easing.OutQuad
-                                    }
-
-                                }
-
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: 150
-                                    }
-
-                                }
-
-                            }
-
-                            MouseArea {
-                                id: nextMouse
-
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: playerWidget.nextTrack()
-                            }
-
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: playerWidget.nextTrack()
                         }
 
                     }

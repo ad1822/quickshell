@@ -29,8 +29,11 @@ Rectangle {
 
         anchors.fill: parent
         hoverEnabled: true
+        acceptedButtons: Qt.LeftButton
         cursorShape: Qt.PointingHandCursor
-        onClicked: changeWallpaperProc.running = true
+        onClicked: (mouse) => {
+            changeWallpaperProc.running = true;
+        }
     }
 
 }

@@ -6,7 +6,6 @@ import Quickshell.Hyprland
 import Quickshell.Io as QsIo
 import Quickshell.Services.UPower
 import Quickshell.Wayland
-import Quickshell.Widgets
 
 PanelWindow {
     id: barWindow
@@ -16,6 +15,17 @@ PanelWindow {
     property bool isHovered: false
     property alias volumeWidget: barVolumeWidget
     property alias brightnessWidget: barBrightnessWidget
+
+    // Close all popups except the one matching the given loader ID
+    function closeAllPopupsExcept(exceptLoader) {
+        var loaders = [wifiPopupLoader, playerPopupLoader, qsPopupLoader, popupLoader, memPopupLoader, netPopupLoader, wallpaperPopupLoader];
+        for (var i = 0; i < loaders.length; i++) {
+            var loader = loaders[i];
+            if (loader && loader !== exceptLoader && loader.active)
+                loader.active = false;
+
+        }
+    }
 
     anchors.top: true
     anchors.left: true
@@ -40,17 +50,31 @@ PanelWindow {
 
             anchors.fill: parent
             hoverEnabled: true
-            onContainsMouseChanged: {
+            onEntered: {
                 if (!barWindow.barExpanded)
-                    barWindow.isHovered = containsMouse;
+                    hoverTimer.start();
 
             }
+            onExited: {
+                hoverTimer.stop();
+                barWindow.isHovered = false;
+            }
             onClicked: {
+                hoverTimer.stop();
                 barWindow.barExpanded = !barWindow.barExpanded;
-                if (barWindow.barExpanded)
-                    barWindow.isHovered = false;
-                else
-                    barWindow.isHovered = containsMouse;
+                barWindow.isHovered = false;
+            }
+
+            Timer {
+                id: hoverTimer
+
+                interval: 150
+                repeat: false
+                onTriggered: {
+                    if (barMouseArea.containsMouse && !barWindow.barExpanded)
+                        barWindow.isHovered = true;
+
+                }
             }
 
             Clock {
@@ -742,6 +766,11 @@ PanelWindow {
 
         active: false
         source: "../components/popout/WifiPopup.qml"
+        onActiveChanged: {
+            if (active)
+                barWindow.closeAllPopupsExcept(wifiPopupLoader);
+
+        }
     }
 
     // --- Player Popup Timers & Loader ---
@@ -777,6 +806,11 @@ PanelWindow {
 
         active: false
         source: "../components/popout/PlayerPopup.qml"
+        onActiveChanged: {
+            if (active)
+                barWindow.closeAllPopupsExcept(playerPopupLoader);
+
+        }
     }
 
     // --- Quick Settings (Volume/Brightness) Popup Timers & Loader ---
@@ -812,6 +846,11 @@ PanelWindow {
 
         active: false
         source: "../components/popout/QsPopup.qml"
+        onActiveChanged: {
+            if (active)
+                barWindow.closeAllPopupsExcept(qsPopupLoader);
+
+        }
     }
 
     // --- Smoothly Collapsible Modules Container ---
@@ -921,6 +960,11 @@ PanelWindow {
 
         active: false
         source: "../components/popout/CpuPopup.qml"
+        onActiveChanged: {
+            if (active)
+                barWindow.closeAllPopupsExcept(popupLoader);
+
+        }
     }
 
     // --- Memory Popup Loader ---
@@ -929,6 +973,11 @@ PanelWindow {
 
         active: false
         source: "../components/popout/MemPopup.qml"
+        onActiveChanged: {
+            if (active)
+                barWindow.closeAllPopupsExcept(memPopupLoader);
+
+        }
     }
 
     // --- Network Popup Loader ---
@@ -937,6 +986,11 @@ PanelWindow {
 
         active: false
         source: "../components/popout/NetPopup.qml"
+        onActiveChanged: {
+            if (active)
+                barWindow.closeAllPopupsExcept(netPopupLoader);
+
+        }
     }
 
     mask: Region {
