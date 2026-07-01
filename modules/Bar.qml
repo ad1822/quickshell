@@ -95,7 +95,7 @@ PanelWindow {
             Timer {
                 id: hoverTimer
 
-                interval: 150
+                interval: 700
                 repeat: false
                 onTriggered: {
                     if (barMouseArea.containsMouse && !barWindow.barExpanded)
@@ -595,9 +595,16 @@ PanelWindow {
         Behavior on radius {
             enabled: !barWindow.isHovered
 
-            NumberAnimation {
-                duration: 350
-                easing.type: Easing.OutCubic
+            SequentialAnimation {
+                PauseAnimation {
+                    duration: barWindow.barExpanded ? 300 : 0
+                }
+
+                NumberAnimation {
+                    duration: barWindow.barExpanded ? 100 : 350
+                    easing.type: Easing.OutCubic
+                }
+
             }
 
         }
@@ -723,21 +730,6 @@ PanelWindow {
 
         }
 
-        Behavior on opacity {
-            SequentialAnimation {
-                PauseAnimation {
-                    duration: barWindow.barExpanded ? 200 : 0
-                }
-
-                NumberAnimation {
-                    duration: barWindow.barExpanded ? 200 : 100
-                    easing.type: Easing.OutQuad
-                }
-
-            }
-
-        }
-
     }
 
     Workspaces {
@@ -753,21 +745,6 @@ PanelWindow {
                 duration: 500
                 easing.type: Easing.OutBack
                 easing.overshoot: 1
-            }
-
-        }
-
-        Behavior on opacity {
-            SequentialAnimation {
-                PauseAnimation {
-                    duration: barWindow.barExpanded ? 150 : 0
-                }
-
-                NumberAnimation {
-                    duration: barWindow.barExpanded ? 200 : 100
-                    easing.type: Easing.OutQuad
-                }
-
             }
 
         }
@@ -903,21 +880,6 @@ PanelWindow {
         Behavior on color {
             ColorAnimation {
                 duration: 150
-            }
-
-        }
-
-        Behavior on opacity {
-            SequentialAnimation {
-                PauseAnimation {
-                    duration: barWindow.barExpanded ? 150 : 0
-                }
-
-                NumberAnimation {
-                    duration: barWindow.barExpanded ? 200 : 100
-                    easing.type: Easing.OutQuad
-                }
-
             }
 
         }
@@ -1219,21 +1181,6 @@ PanelWindow {
 
         }
 
-        Behavior on opacity {
-            SequentialAnimation {
-                PauseAnimation {
-                    duration: (barWindow.barExpanded && barWindow.modulesExpanded) ? 150 : 0
-                }
-
-                NumberAnimation {
-                    duration: (barWindow.barExpanded && barWindow.modulesExpanded) ? 200 : 100
-                    easing.type: Easing.OutQuad
-                }
-
-            }
-
-        }
-
     }
 
     // --- CPU Popup Loader ---
@@ -1273,6 +1220,14 @@ PanelWindow {
                 barWindow.closeAllPopupsExcept(netPopupLoader);
 
         }
+    }
+
+    Behavior on margins.top {
+        NumberAnimation {
+            duration: 350
+            easing.type: Easing.OutCubic
+        }
+
     }
 
     mask: Region {
