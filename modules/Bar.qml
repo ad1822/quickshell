@@ -15,10 +15,26 @@ PanelWindow {
     property bool isHovered: false
     property alias volumeWidget: barVolumeWidget
     property alias brightnessWidget: barBrightnessWidget
+    property string osdMode: "" // "", "volume", "brightness"
+    property int osdVolume: 0
+    property bool osdMuted: false
+    property int osdBrightness: 0
+
+    function triggerBarOsd(type, val, extra) {
+        if (type === "volume") {
+            osdVolume = val;
+            osdMuted = extra;
+            osdMode = "volume";
+        } else if (type === "brightness") {
+            osdBrightness = val;
+            osdMode = "brightness";
+        }
+        barOsdTimer.restart();
+    }
 
     // Close all popups except the one matching the given loader ID
     function closeAllPopupsExcept(exceptLoader) {
-        var loaders = [wifiPopupLoader, playerPopupLoader, qsPopupLoader, popupLoader, memPopupLoader, netPopupLoader, wallpaperPopupLoader];
+        var loaders = [wifiPopupLoader, playerPopupLoader, qsPopupLoader, popupLoader, memPopupLoader, netPopupLoader];
         for (var i = 0; i < loaders.length; i++) {
             var loader = loaders[i];
             if (loader && loader !== exceptLoader && loader.active)
@@ -35,6 +51,16 @@ PanelWindow {
     color: "transparent"
     WlrLayershell.exclusiveZone: 30
 
+    Timer {
+        id: barOsdTimer
+
+        interval: 1800
+        repeat: false
+        onTriggered: {
+            barWindow.osdMode = "";
+        }
+    }
+
     Rectangle {
         id: barBg
 
@@ -42,8 +68,9 @@ PanelWindow {
         anchors.horizontalCenter: parent.horizontalCenter
         height: barWindow.barExpanded ? 30 : (barWindow.isHovered ? 64 : 30)
         color: "#11111b"
-        width: barWindow.barExpanded ? parent.width : (barWindow.isHovered ? 360 : (barClock.width + 10))
+        width: barWindow.barExpanded ? parent.width : (barWindow.isHovered ? 360 : (barWindow.osdMode !== "" ? 170 : (barClock.width + 10)))
         radius: barWindow.barExpanded ? 0 : (barWindow.isHovered ? 12 : 6)
+        clip: true
 
         MouseArea {
             id: barMouseArea
@@ -83,11 +110,189 @@ PanelWindow {
                 anchors.centerIn: parent
                 height: parent.height
                 barExpanded: barWindow.barExpanded
-                opacity: (barWindow.barExpanded || (!barWindow.isHovered && barBg.width < 150)) ? 1 : 0
+                isMusicPlaying: playerWidget.isPlaying
+                states: [
+                    State {
+                        name: "visible"
+                        when: barWindow.barExpanded || (!barWindow.isHovered && barWindow.osdMode === "")
 
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: 150
+                        PropertyChanges {
+                            target: barClock
+                            opacity: 1
+                        }
+
+                    },
+                    State {
+                        name: "hidden"
+                        when: !barWindow.barExpanded && (barWindow.isHovered || barWindow.osdMode !== "")
+
+                        PropertyChanges {
+                            target: barClock
+                            opacity: 0
+                        }
+
+                    }
+                ]
+                transitions: [
+                    Transition {
+                        from: "visible"
+                        to: "hidden"
+
+                        NumberAnimation {
+                            properties: "opacity"
+                            duration: 0
+                        }
+
+                    },
+                    Transition {
+                        from: "hidden"
+                        to: "visible"
+
+                        SequentialAnimation {
+                            PauseAnimation {
+                                duration: 250
+                            }
+
+                            NumberAnimation {
+                                properties: "opacity"
+                                duration: 200
+                                easing.type: Easing.OutQuad
+                            }
+
+                        }
+
+                    }
+                ]
+            }
+
+            // Morphing OSD Toast Content inside Bar Capsule
+            Item {
+                id: barOsdContent
+
+                anchors.fill: parent
+                states: [
+                    State {
+                        name: "visible"
+                        when: !barWindow.barExpanded && !barWindow.isHovered && barWindow.osdMode !== ""
+
+                        PropertyChanges {
+                            target: barOsdContent
+                            opacity: 1
+                        }
+
+                    },
+                    State {
+                        name: "hidden"
+                        when: barWindow.barExpanded || barWindow.isHovered || barWindow.osdMode === ""
+
+                        PropertyChanges {
+                            target: barOsdContent
+                            opacity: 0
+                        }
+
+                    }
+                ]
+                transitions: [
+                    Transition {
+                        from: "hidden"
+                        to: "visible"
+
+                        SequentialAnimation {
+                            PauseAnimation {
+                                duration: 150
+                            }
+
+                            NumberAnimation {
+                                properties: "opacity"
+                                duration: 150
+                                easing.type: Easing.OutQuad
+                            }
+
+                        }
+
+                    },
+                    Transition {
+                        from: "visible"
+                        to: "hidden"
+
+                        NumberAnimation {
+                            properties: "opacity"
+                            duration: 0
+                        }
+
+                    }
+                ]
+
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 8
+
+                    Text {
+                        text: {
+                            if (barWindow.osdMode === "volume") {
+                                if (barWindow.osdMuted || barWindow.osdVolume <= 0)
+                                    return "volume_off";
+
+                                if (barWindow.osdVolume < 33)
+                                    return "volume_down";
+
+                                if (barWindow.osdVolume < 66)
+                                    return "volume_down";
+
+                                return "volume_up";
+                            } else if (barWindow.osdMode === "brightness") {
+                                if (barWindow.osdBrightness <= 0)
+                                    return "brightness_low";
+
+                                if (barWindow.osdBrightness < 33)
+                                    return "brightness_low";
+
+                                if (barWindow.osdBrightness < 66)
+                                    return "brightness_medium";
+
+                                return "brightness_high";
+                            }
+                            return "";
+                        }
+                        color: {
+                            if (barWindow.osdMode === "volume")
+                                return barWindow.osdMuted ? Style.red : Style.mauve;
+                            else
+                                return Style.yellow;
+                        }
+                        font.family: "Material Symbols Rounded"
+                        font.pixelSize: 16
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    Rectangle {
+                        width: 120
+                        height: 4
+                        radius: 2
+                        color: Style.surface0
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        Rectangle {
+                            height: parent.height
+                            radius: 2
+                            color: {
+                                if (barWindow.osdMode === "volume")
+                                    return barWindow.osdMuted ? Style.overlay1 : Style.mauve;
+                                else
+                                    return Style.yellow;
+                            }
+                            width: parent.width * ((barWindow.osdMode === "volume" ? barWindow.osdVolume : barWindow.osdBrightness) / 100)
+
+                            Behavior on width {
+                                NumberAnimation {
+                                    duration: 150
+                                    easing.type: Easing.OutQuad
+                                }
+
+                            }
+
+                        }
+
                     }
 
                 }
@@ -99,8 +304,52 @@ PanelWindow {
                 id: hoverContent
 
                 anchors.fill: parent
-                opacity: (barWindow.isHovered && !barWindow.barExpanded && barBg.width > 220) ? 1 : 0
                 visible: opacity > 0
+                states: [
+                    State {
+                        name: "visible"
+                        when: barWindow.isHovered && !barWindow.barExpanded && barBg.width > 220
+
+                        PropertyChanges {
+                            target: hoverContent
+                            opacity: 1
+                        }
+
+                    },
+                    State {
+                        name: "hidden"
+                        when: !barWindow.isHovered || barWindow.barExpanded || barBg.width <= 220
+
+                        PropertyChanges {
+                            target: hoverContent
+                            opacity: 0
+                        }
+
+                    }
+                ]
+                transitions: [
+                    Transition {
+                        from: "hidden"
+                        to: "visible"
+
+                        NumberAnimation {
+                            properties: "opacity"
+                            duration: 100
+                            easing.type: Easing.OutQuad
+                        }
+
+                    },
+                    Transition {
+                        from: "visible"
+                        to: "hidden"
+
+                        NumberAnimation {
+                            properties: "opacity"
+                            duration: 0
+                        }
+
+                    }
+                ]
 
                 // Left Section: Active Window Icon Only
                 Item {
@@ -313,40 +562,42 @@ PanelWindow {
                     transparentBg: true
                 }
 
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: 150
-                    }
+            }
 
+        }
+
+        Behavior on width {
+            SequentialAnimation {
+                PauseAnimation {
+                    duration: (!barWindow.barExpanded) ? 100 : 0
+                }
+
+                NumberAnimation {
+                    duration: 450
+                    easing.type: Easing.OutBack
+                    easing.overshoot: 0.6
                 }
 
             }
 
         }
 
-        Behavior on width {
-            NumberAnimation {
-                duration: 500
-                easing.type: Easing.OutBack
-                easing.overshoot: 1
-            }
-
-        }
-
         Behavior on height {
+            enabled: !barWindow.isHovered
+
             NumberAnimation {
-                duration: 400
-                easing.type: Easing.OutBack
-                easing.overshoot: 1
+                duration: 350
+                easing.type: Easing.OutCubic
             }
 
         }
 
         Behavior on radius {
+            enabled: !barWindow.isHovered
+
             NumberAnimation {
-                duration: 500
-                easing.type: Easing.OutBack
-                easing.overshoot: 1
+                duration: 350
+                easing.type: Easing.OutCubic
             }
 
         }
@@ -473,8 +724,16 @@ PanelWindow {
         }
 
         Behavior on opacity {
-            NumberAnimation {
-                duration: 350
+            SequentialAnimation {
+                PauseAnimation {
+                    duration: barWindow.barExpanded ? 200 : 0
+                }
+
+                NumberAnimation {
+                    duration: barWindow.barExpanded ? 200 : 100
+                    easing.type: Easing.OutQuad
+                }
+
             }
 
         }
@@ -499,8 +758,16 @@ PanelWindow {
         }
 
         Behavior on opacity {
-            NumberAnimation {
-                duration: 350
+            SequentialAnimation {
+                PauseAnimation {
+                    duration: barWindow.barExpanded ? 150 : 0
+                }
+
+                NumberAnimation {
+                    duration: barWindow.barExpanded ? 200 : 100
+                    easing.type: Easing.OutQuad
+                }
+
             }
 
         }
@@ -641,8 +908,16 @@ PanelWindow {
         }
 
         Behavior on opacity {
-            NumberAnimation {
-                duration: 350
+            SequentialAnimation {
+                PauseAnimation {
+                    duration: barWindow.barExpanded ? 150 : 0
+                }
+
+                NumberAnimation {
+                    duration: barWindow.barExpanded ? 200 : 100
+                    easing.type: Easing.OutQuad
+                }
+
             }
 
         }
@@ -945,9 +1220,16 @@ PanelWindow {
         }
 
         Behavior on opacity {
-            NumberAnimation {
-                duration: 250
-                easing.type: Easing.InOutQuad
+            SequentialAnimation {
+                PauseAnimation {
+                    duration: (barWindow.barExpanded && barWindow.modulesExpanded) ? 150 : 0
+                }
+
+                NumberAnimation {
+                    duration: (barWindow.barExpanded && barWindow.modulesExpanded) ? 200 : 100
+                    easing.type: Easing.OutQuad
+                }
+
             }
 
         }

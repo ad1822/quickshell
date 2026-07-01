@@ -6,6 +6,7 @@ Rectangle {
 
     property var currentTime: new Date()
     property bool barExpanded: true
+    property bool isMusicPlaying: false
 
     implicitWidth: clockRow.implicitWidth + 16
     implicitHeight: 22
@@ -17,7 +18,7 @@ Rectangle {
         anchors.centerIn: parent
         spacing: 6
 
-        // 1. Calendar Icon (Only visible when wrapped)
+        // 1. Calendar Icon (Only visible when wrapped and music NOT playing)
         Text {
             id: calendarIcon
             text: "calendar_month"
@@ -26,12 +27,130 @@ Rectangle {
             font.pixelSize: 14
             verticalAlignment: Text.AlignVCenter
             
-            opacity: clockRoot.barExpanded ? 0.0 : 1.0
-            width: clockRoot.barExpanded ? 0 : 14
+            opacity: clockRoot.barExpanded ? 0.0 : (clockRoot.isMusicPlaying ? 0.0 : 1.0)
+            width: clockRoot.barExpanded ? 0 : (clockRoot.isMusicPlaying ? 0 : 14)
             clip: true
 
             Behavior on opacity { NumberAnimation { duration: 250 } }
             Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutQuad } }
+        }
+
+        // 1.5 Dynamic Music Visualizer (Only visible when wrapped and music IS playing)
+        Item {
+            id: miniVisualizerContainer
+            anchors.verticalCenter: parent.verticalCenter
+            height: 12
+            
+            opacity: (clockRoot.barExpanded || !clockRoot.isMusicPlaying) ? 0.0 : 1.0
+            width: (clockRoot.barExpanded || !clockRoot.isMusicPlaying) ? 0 : 14
+            clip: true
+
+            Behavior on opacity { NumberAnimation { duration: 250 } }
+            Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutQuad } }
+
+            Row {
+                id: miniVisualizer
+                spacing: 2
+                anchors.centerIn: parent
+                height: 12
+                width: 10
+
+                Rectangle {
+                    id: bar1
+                    width: 2
+                    height: 4
+                    radius: 1
+                    color: Style.mauve
+                    anchors.bottom: parent.bottom
+
+                    SequentialAnimation {
+                        running: clockRoot.isMusicPlaying
+                        loops: Animation.Infinite
+
+                        NumberAnimation {
+                            target: bar1
+                            property: "height"
+                            from: 3
+                            to: 12
+                            duration: 400
+                            easing.type: Easing.InOutSine
+                        }
+
+                        NumberAnimation {
+                            target: bar1
+                            property: "height"
+                            from: 12
+                            to: 3
+                            duration: 350
+                            easing.type: Easing.InOutSine
+                        }
+                    }
+                }
+
+                Rectangle {
+                    id: bar2
+                    width: 2
+                    height: 6
+                    radius: 1
+                    color: Style.pink
+                    anchors.bottom: parent.bottom
+
+                    SequentialAnimation {
+                        running: clockRoot.isMusicPlaying
+                        loops: Animation.Infinite
+
+                        NumberAnimation {
+                            target: bar2
+                            property: "height"
+                            from: 4
+                            to: 11
+                            duration: 300
+                            easing.type: Easing.InOutSine
+                        }
+
+                        NumberAnimation {
+                            target: bar2
+                            property: "height"
+                            from: 11
+                            to: 4
+                            duration: 350
+                            easing.type: Easing.InOutSine
+                        }
+                    }
+                }
+
+                Rectangle {
+                    id: bar3
+                    width: 2
+                    height: 5
+                    radius: 1
+                    color: Style.mauve
+                    anchors.bottom: parent.bottom
+
+                    SequentialAnimation {
+                        running: clockRoot.isMusicPlaying
+                        loops: Animation.Infinite
+
+                        NumberAnimation {
+                            target: bar3
+                            property: "height"
+                            from: 2
+                            to: 12
+                            duration: 450
+                            easing.type: Easing.InOutSine
+                        }
+
+                        NumberAnimation {
+                            target: bar3
+                            property: "height"
+                            from: 12
+                            to: 2
+                            duration: 400
+                            easing.type: Easing.InOutSine
+                        }
+                    }
+                }
+            }
         }
 
         // 2. Pulse Time (Hours & Minutes)

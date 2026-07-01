@@ -1,8 +1,8 @@
+import "../../components"
 import QtQuick
 import QtQuick.Shapes
 import Quickshell
 import Quickshell.Io as QsIo
-import "../../components"
 
 PopupWindow {
     id: cpuPopup
@@ -28,25 +28,6 @@ PopupWindow {
         popupContent.width = 150;
         popupContent.height = 230;
         popupContent.opacity = 1;
-    }
-
-    onIsMouseOverChanged: {
-        if (isMouseOver) {
-            openTimer.stop();
-            closeTimer.stop();
-            if (destroyTimer.running)
-                cpuPopup.cancelClose();
-        } else {
-            closeTimer.start();
-        }
-    }
-
-    Timer {
-        id: destroyTimer
-
-        interval: 300
-        repeat: false
-        onTriggered: popupLoader.active = false
     }
 
     function getProcessInfo(name, cpuStr) {
@@ -89,6 +70,17 @@ PopupWindow {
         };
     }
 
+    onIsMouseOverChanged: {
+        if (isMouseOver) {
+            openTimer.stop();
+            closeTimer.stop();
+            if (destroyTimer.running)
+                cpuPopup.cancelClose();
+
+        } else {
+            closeTimer.start();
+        }
+    }
     anchor.window: barWindow
     // Align the popup's center to the CPU widget's center (globally mapped)
     anchor.rect.x: modulesContainer.x + cpuWidget.x + (cpuWidget.width / 2) - 110
@@ -100,9 +92,18 @@ PopupWindow {
     onVisibleChanged: {
         if (!visible)
             popupLoader.active = false;
+
     }
     Component.onCompleted: {
         topProcessesProc.running = true;
+    }
+
+    Timer {
+        id: destroyTimer
+
+        interval: 300
+        repeat: false
+        onTriggered: popupLoader.active = false
     }
 
     ListModel {
@@ -138,6 +139,7 @@ PopupWindow {
                 }
             }
         }
+
     }
 
     Timer {
@@ -186,6 +188,7 @@ PopupWindow {
                     radiusY: 24
                     direction: PathArc.Counterclockwise
                 }
+
             }
 
             ShapePath {
@@ -202,7 +205,9 @@ PopupWindow {
                     radiusY: 24
                     direction: PathArc.Counterclockwise
                 }
+
             }
+
         }
 
         // Right Fillet (Inverted Border Corner)
@@ -241,6 +246,7 @@ PopupWindow {
                     radiusY: 24
                     direction: PathArc.Clockwise
                 }
+
             }
 
             ShapePath {
@@ -257,7 +263,9 @@ PopupWindow {
                     radiusY: 24
                     direction: PathArc.Clockwise
                 }
+
             }
+
         }
 
         Item {
@@ -354,7 +362,9 @@ PopupWindow {
                         elide: Text.ElideRight
                         anchors.verticalCenter: parent.verticalCenter
                     }
+
                 }
+
             }
 
             Behavior on width {
@@ -363,6 +373,7 @@ PopupWindow {
                     easing.type: Easing.Bezier
                     easing.bezierCurve: Style.expressiveDefaultSpatialCurve
                 }
+
             }
 
             Behavior on height {
@@ -371,6 +382,7 @@ PopupWindow {
                     easing.type: Easing.Bezier
                     easing.bezierCurve: Style.expressiveDefaultSpatialCurve
                 }
+
             }
 
             Behavior on opacity {
@@ -379,7 +391,11 @@ PopupWindow {
                     easing.type: Easing.Bezier
                     easing.bezierCurve: Style.expressiveDefaultEffectsCurve
                 }
+
             }
+
         }
+
     }
+
 }

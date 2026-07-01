@@ -1,7 +1,7 @@
+import "../../components"
 import QtQuick
 import QtQuick.Shapes
 import Quickshell
-import "../../components"
 
 PopupWindow {
     id: qsPopup
@@ -51,6 +51,7 @@ PopupWindow {
             qsCloseTimer.stop();
             if (destroyTimer.running)
                 qsPopup.cancelClose();
+
         } else {
             qsCloseTimer.start();
         }
@@ -65,6 +66,7 @@ PopupWindow {
     onVisibleChanged: {
         if (!visible)
             qsPopupLoader.active = false;
+
     }
 
     Timer {
@@ -114,6 +116,7 @@ PopupWindow {
                     radiusY: 24
                     direction: PathArc.Counterclockwise
                 }
+
             }
 
             ShapePath {
@@ -130,7 +133,9 @@ PopupWindow {
                     radiusY: 24
                     direction: PathArc.Counterclockwise
                 }
+
             }
+
         }
 
         // Right Fillet (Inverted Border Corner)
@@ -169,6 +174,7 @@ PopupWindow {
                     radiusY: 24
                     direction: PathArc.Clockwise
                 }
+
             }
 
             ShapePath {
@@ -185,7 +191,9 @@ PopupWindow {
                     radiusY: 24
                     direction: PathArc.Clockwise
                 }
+
             }
+
         }
 
         Item {
@@ -321,12 +329,15 @@ PopupWindow {
                                     onPressed: (mouse) => {
                                         if (mouse.button === Qt.LeftButton)
                                             mouse.accepted = false;
+
                                     }
                                     onClicked: (mouse) => {
                                         Quickshell.execDetached(["pamixer", "-t"]);
                                     }
                                 }
+
                             }
+
                         }
 
                         MouseArea {
@@ -348,6 +359,7 @@ PopupWindow {
                             onPositionChanged: (mouse) => {
                                 if (pressed)
                                     updateVolume(mouse);
+
                             }
 
                             // Bind the volume adjustment guard to prevent background processes from overriding drags
@@ -356,8 +368,11 @@ PopupWindow {
                                 property: "isAdjusting"
                                 value: volSliderMouse.pressed
                             }
+
                         }
+
                     }
+
                 }
 
                 // BRIGHTNESS ROW
@@ -407,14 +422,15 @@ PopupWindow {
 
                                 Text {
                                     id: brightKnobIcon
+
+                                    property real rotationAngle: 0
+
                                     text: barBrightnessWidget.brightnessIcon(barBrightnessWidget.brightness)
                                     color: Style.base
                                     font.family: "Material Symbols Rounded"
                                     font.pixelSize: 11
                                     font.weight: Style.fontWeight
                                     anchors.centerIn: parent
-
-                                    property real rotationAngle: 0
                                     rotation: rotationAngle
 
                                     Behavior on rotation {
@@ -422,7 +438,9 @@ PopupWindow {
                                             duration: 400
                                             easing.type: Easing.OutQuad
                                         }
+
                                     }
+
                                 }
 
                                 MouseArea {
@@ -436,9 +454,12 @@ PopupWindow {
                                         brightKnobIcon.rotationAngle += 360;
                                         if (mouse.button === Qt.LeftButton)
                                             mouse.accepted = false;
+
                                     }
                                 }
+
                             }
+
                         }
 
                         MouseArea {
@@ -461,6 +482,7 @@ PopupWindow {
                             onPositionChanged: (mouse) => {
                                 if (pressed)
                                     updateBrightness(mouse);
+
                             }
 
                             // Bind the brightness adjustment guard
@@ -469,9 +491,13 @@ PopupWindow {
                                 property: "isAdjusting"
                                 value: brightSliderMouse.pressed
                             }
+
                         }
+
                     }
+
                 }
+
             }
 
             Behavior on width {
@@ -480,6 +506,7 @@ PopupWindow {
                     easing.type: Easing.Bezier
                     easing.bezierCurve: Style.expressiveDefaultSpatialCurve
                 }
+
             }
 
             Behavior on height {
@@ -488,6 +515,7 @@ PopupWindow {
                     easing.type: Easing.Bezier
                     easing.bezierCurve: Style.expressiveDefaultSpatialCurve
                 }
+
             }
 
             Behavior on opacity {
@@ -496,8 +524,11 @@ PopupWindow {
                     easing.type: Easing.Bezier
                     easing.bezierCurve: Style.expressiveDefaultEffectsCurve
                 }
+
             }
+
         }
+
     }
 
     Timer {
@@ -506,4 +537,5 @@ PopupWindow {
         repeat: false
         onTriggered: qsPopup.cancelClose()
     }
+
 }

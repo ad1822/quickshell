@@ -1,8 +1,8 @@
 import "../components"
 import QtQuick
 import Quickshell
-import Quickshell.Wayland
 import Quickshell.Hyprland
+import Quickshell.Wayland
 
 PanelWindow {
     id: osdWindow

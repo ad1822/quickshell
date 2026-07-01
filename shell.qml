@@ -28,6 +28,10 @@ ShellRoot {
         id: spotlightWindow
     }
 
+    WallpaperSwitcher {
+        id: wallpaperWindow
+    }
+
     Connections {
         target: barWindow.volumeWidget
 
@@ -42,7 +46,11 @@ ShellRoot {
                 return;
             }
             if (!barWindow.volumeWidget.isAdjusting) {
-                volumeOsd.trigger(barWindow.volumeWidget.volume, barWindow.volumeWidget.isMuted);
+                if (!barWindow.barExpanded && !barWindow.isHovered) {
+                    barWindow.triggerBarOsd("volume", barWindow.volumeWidget.volume, barWindow.volumeWidget.isMuted);
+                } else {
+                    volumeOsd.trigger(barWindow.volumeWidget.volume, barWindow.volumeWidget.isMuted);
+                }
             }
         }
 
@@ -52,7 +60,11 @@ ShellRoot {
                 return;
             }
             if (!barWindow.volumeWidget.isAdjusting) {
-                volumeOsd.trigger(barWindow.volumeWidget.volume, barWindow.volumeWidget.isMuted);
+                if (!barWindow.barExpanded && !barWindow.isHovered) {
+                    barWindow.triggerBarOsd("volume", barWindow.volumeWidget.volume, barWindow.volumeWidget.isMuted);
+                } else {
+                    volumeOsd.trigger(barWindow.volumeWidget.volume, barWindow.volumeWidget.isMuted);
+                }
             }
         }
     }
@@ -70,7 +82,11 @@ ShellRoot {
                 return;
             }
             if (!barWindow.brightnessWidget.isAdjusting) {
-                brightnessOsd.trigger(barWindow.brightnessWidget.brightness);
+                if (!barWindow.barExpanded && !barWindow.isHovered) {
+                    barWindow.triggerBarOsd("brightness", barWindow.brightnessWidget.brightness);
+                } else {
+                    brightnessOsd.trigger(barWindow.brightnessWidget.brightness);
+                }
             }
         }
     }
