@@ -2,11 +2,11 @@ import "../components"
 import QtQuick
 import QtQuick.Shapes
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io as QsIo
 import Quickshell.Services.UPower
 import Quickshell.Wayland
 import Quickshell.Widgets
-import Quickshell.Hyprland
 
 PanelWindow {
     id: barWindow
@@ -34,30 +34,6 @@ PanelWindow {
         color: "#11111b"
         width: barWindow.barExpanded ? parent.width : (barWindow.isHovered ? 360 : (barClock.width + 10))
         radius: barWindow.barExpanded ? 0 : (barWindow.isHovered ? 12 : 6)
-
-        Behavior on width {
-            NumberAnimation {
-                duration: 500
-                easing.type: Easing.OutBack
-                easing.overshoot: 1
-            }
-        }
-
-        Behavior on height {
-            NumberAnimation {
-                duration: 400
-                easing.type: Easing.OutBack
-                easing.overshoot: 1
-            }
-        }
-
-        Behavior on radius {
-            NumberAnimation {
-                duration: 500
-                easing.type: Easing.OutBack
-                easing.overshoot: 1
-            }
-        }
 
         MouseArea {
             id: barMouseArea
@@ -105,6 +81,7 @@ PanelWindow {
                 // Left Section: Active Window Icon Only
                 Item {
                     id: activeWindowIconOnly
+
                     anchors.left: parent.left
                     anchors.leftMargin: 20
                     anchors.verticalCenter: parent.verticalCenter
@@ -114,124 +91,168 @@ PanelWindow {
                     // Application Icon
                     IconImage {
                         id: activeAppIcon
-                        anchors.fill: parent
-                        
+
                         property var activeToplevel: null
                         property string appClass: (activeToplevel && activeToplevel.lastIpcObject) ? activeToplevel.lastIpcObject.class : ""
-                        
+
                         function getAppIconFromDesktop(appClass) {
+                            function getBinary(execStr) {
+                                if (!execStr)
+                                    return "";
+
+                                var trimmed = execStr.trim();
+                                var firstWord = trimmed.split(" ")[0];
+                                var lastSlash = firstWord.lastIndexOf("/");
+                                if (lastSlash !== -1)
+                                    return firstWord.substring(lastSlash + 1);
+
+                                return firstWord;
+                            }
+
+                            function isGenericLauncher(execStr) {
+                                if (!execStr)
+                                    return false;
+
+                                var cleaned = execStr.trim().replace(/%[fFuUiIdDnNoNvkU]/g, "").trim();
+                                var parts = cleaned.split(/\s+/);
+                                return parts.length === 1;
+                            }
+
                             if (!appClass || !spotlightWindow || !spotlightWindow.allApps)
                                 return "";
 
                             var query = appClass.toLowerCase();
-                            
-                            function getBinary(execStr) {
-                                if (!execStr) return "";
-                                var trimmed = execStr.trim();
-                                var firstWord = trimmed.split(" ")[0];
-                                var lastSlash = firstWord.lastIndexOf("/");
-                                if (lastSlash !== -1) {
-                                    return firstWord.substring(lastSlash + 1);
-                                }
-                                return firstWord;
-                            }
-
-                            // 1. Try exact binary name match
+                            // 1. Try exact binary name match (preferring generic launchers)
                             for (var i = 0; i < spotlightWindow.allApps.length; i++) {
                                 var app = spotlightWindow.allApps[i];
-                                var binary = getBinary(app.exec).toLowerCase();
-                                if (binary === query) {
-                                    return app.icon;
-                                }
-                            }
+                                if (!isGenericLauncher(app.exec))
+                                    continue;
 
+                                var binary = getBinary(app.exec).toLowerCase();
+                                if (binary === query)
+                                    return app.icon;
+
+                            }
                             // 2. Try name match (case-insensitive)
                             for (var i = 0; i < spotlightWindow.allApps.length; i++) {
                                 var app = spotlightWindow.allApps[i];
-                                if (app.name.toLowerCase() === query) {
+                                if (app.name.toLowerCase() === query)
                                     return app.icon;
-                                }
-                            }
 
-                            // 3. Try loose binary prefix/substring match
+                            }
+                            // 3. Try loose binary prefix/substring match (preferring generic launchers)
+                            for (var i = 0; i < spotlightWindow.allApps.length; i++) {
+                                var app = spotlightWindow.allApps[i];
+                                if (!isGenericLauncher(app.exec))
+                                    continue;
+
+                                var binary = getBinary(app.exec).toLowerCase();
+                                if (binary.indexOf(query) !== -1 || query.indexOf(binary) !== -1)
+                                    return app.icon;
+
+                            }
+                            // 4. Fallback: If no generic launcher matched, try any matching binary
                             for (var i = 0; i < spotlightWindow.allApps.length; i++) {
                                 var app = spotlightWindow.allApps[i];
                                 var binary = getBinary(app.exec).toLowerCase();
-                                if (binary.indexOf(query) !== -1 || query.indexOf(binary) !== -1) {
+                                if (binary === query || binary.indexOf(query) !== -1 || query.indexOf(binary) !== -1)
                                     return app.icon;
-                                }
-                            }
 
+                            }
                             return "";
                         }
 
+                        function updateActiveToplevel() {
+                            for (var i = 0; i < toplevelTracker.count; i++) {
+                                var obj = toplevelTracker.objectAt(i);
+                                if (obj && obj.isActivated) {
+                                    activeToplevel = obj.toplevel;
+                                    return ;
+                                }
+                            }
+                            activeToplevel = null;
+                        }
+
+                        anchors.fill: parent
                         source: {
-                            if (!appClass) return "";
+                            if (!appClass)
+                                return "";
+
                             var cleanClass = appClass;
                             if (cleanClass.indexOf(".") !== -1) {
                                 var parts = cleanClass.split(".");
                                 cleanClass = parts[parts.length - 1];
                             }
-                            
                             // Try finding the icon from desktop database first
                             var desktopIcon = getAppIconFromDesktop(cleanClass);
                             var icon = "";
                             if (desktopIcon) {
-                                if (desktopIcon.indexOf("/") === 0) {
+                                if (desktopIcon.indexOf("/") === 0)
                                     icon = "file://" + desktopIcon;
-                                } else {
+                                else
                                     icon = Quickshell.iconPath(desktopIcon);
-                                }
                             }
-                            
                             // Fallback to direct class lookup in the icon theme
                             if (!icon) {
                                 var themeIcon = Quickshell.iconPath(appClass.toLowerCase());
-                                if (!themeIcon) themeIcon = Quickshell.iconPath(cleanClass.toLowerCase());
-                                if (!themeIcon) themeIcon = Quickshell.iconPath(appClass);
-                                if (!themeIcon) themeIcon = Quickshell.iconPath(cleanClass);
-                                if (themeIcon) {
+                                if (!themeIcon)
+                                    themeIcon = Quickshell.iconPath(cleanClass.toLowerCase());
+
+                                if (!themeIcon)
+                                    themeIcon = Quickshell.iconPath(appClass);
+
+                                if (!themeIcon)
+                                    themeIcon = Quickshell.iconPath(cleanClass);
+
+                                if (themeIcon)
                                     icon = (themeIcon.toString().indexOf("/") === 0) ? "file://" + themeIcon : themeIcon;
-                                }
+
                             }
-                            
                             return icon;
                         }
-                        
                         visible: source !== "" && status === Image.Ready
                     }
 
                     // Fallback Text Icon
                     Text {
-                        text: "desktop_windows"
-                        color: Style.lavender
+                        text: "widgets"
+                        color: Style.subtext0
                         font.family: "Material Symbols Rounded"
-                        font.pixelSize: 22
+                        font.pixelSize: 18
                         anchors.centerIn: parent
                         visible: !activeAppIcon.visible
                     }
 
                     // Instantiator to track focus changes dynamically
                     Instantiator {
+                        id: toplevelTracker
+
                         model: Hyprland.toplevels
+
                         delegate: QtObject {
                             property bool isActivated: modelData ? modelData.activated : false
-                            
+                            property var toplevel: modelData
+
                             Component.onCompleted: {
-                                if (isActivated) {
+                                if (isActivated)
                                     activeAppIcon.activeToplevel = modelData;
-                                }
+
                             }
-                            
                             onIsActivatedChanged: {
-                                if (isActivated) {
+                                if (isActivated)
                                     activeAppIcon.activeToplevel = modelData;
-                                } else if (activeAppIcon.activeToplevel === modelData) {
-                                    activeAppIcon.activeToplevel = null;
-                                }
+                                else
+                                    activeAppIcon.updateActiveToplevel();
+                            }
+                            Component.onDestruction: {
+                                if (activeAppIcon.activeToplevel === modelData)
+                                    activeAppIcon.updateActiveToplevel();
+
                             }
                         }
+
                     }
+
                 }
 
                 // Middle Section: Large Time & Date
@@ -279,7 +300,32 @@ PanelWindow {
 
         }
 
+        Behavior on width {
+            NumberAnimation {
+                duration: 500
+                easing.type: Easing.OutBack
+                easing.overshoot: 1
+            }
 
+        }
+
+        Behavior on height {
+            NumberAnimation {
+                duration: 400
+                easing.type: Easing.OutBack
+                easing.overshoot: 1
+            }
+
+        }
+
+        Behavior on radius {
+            NumberAnimation {
+                duration: 500
+                easing.type: Easing.OutBack
+                easing.overshoot: 1
+            }
+
+        }
 
     }
 
@@ -399,6 +445,7 @@ PanelWindow {
                 easing.type: Easing.OutBack
                 easing.overshoot: 1
             }
+
         }
 
         Behavior on opacity {
@@ -424,6 +471,7 @@ PanelWindow {
                 easing.type: Easing.OutBack
                 easing.overshoot: 1
             }
+
         }
 
         Behavior on opacity {
