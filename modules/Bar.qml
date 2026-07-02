@@ -13,6 +13,20 @@ PanelWindow {
     property bool modulesExpanded: false
     property bool barExpanded: false
     property bool isHovered: false
+    property var activeToastNotification: null
+
+    Timer {
+        id: barNotifToastTimer
+        interval: 3000
+        repeat: false
+        onTriggered: {
+            barWindow.activeToastNotification = null;
+        }
+    }
+
+    function restartToastTimer() {
+        barNotifToastTimer.restart();
+    }
     property alias volumeWidget: barVolumeWidget
     property alias brightnessWidget: barBrightnessWidget
     property string osdMode: "" // "", "volume", "brightness"
@@ -46,7 +60,7 @@ PanelWindow {
     anchors.top: true
     anchors.left: true
     anchors.right: true
-    implicitHeight: barWindow.barExpanded ? 30 : (barWindow.isHovered ? 64 : 30)
+    implicitHeight: barWindow.barExpanded ? 30 : ((barWindow.isHovered || barWindow.activeToastNotification !== null) ? 64 : 30)
     margins.top: barWindow.barExpanded ? 0 : 4
     color: "transparent"
     WlrLayershell.exclusiveZone: 30
@@ -66,10 +80,10 @@ PanelWindow {
 
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        height: barWindow.barExpanded ? 30 : (barWindow.isHovered ? 64 : 30)
+        height: barWindow.barExpanded ? 30 : ((barWindow.isHovered || barWindow.activeToastNotification !== null) ? 64 : 30)
         color: "#11111b"
-        width: barWindow.barExpanded ? parent.width : (barWindow.isHovered ? 360 : (barWindow.osdMode !== "" ? 170 : (barClock.width + 10)))
-        radius: barWindow.barExpanded ? 0 : (barWindow.isHovered ? 12 : 6)
+        width: barWindow.barExpanded ? parent.width : ((barWindow.isHovered || barWindow.activeToastNotification !== null) ? 360 : (barWindow.osdMode !== "" ? 170 : (barClock.width + 10)))
+        radius: barWindow.barExpanded ? 0 : ((barWindow.isHovered || barWindow.activeToastNotification !== null) ? 12 : 6)
         clip: true
 
         MouseArea {
@@ -86,16 +100,12 @@ PanelWindow {
                 hoverTimer.stop();
                 barWindow.isHovered = false;
             }
-            onClicked: {
-                hoverTimer.stop();
-                barWindow.barExpanded = !barWindow.barExpanded;
-                barWindow.isHovered = false;
-            }
+
 
             Timer {
                 id: hoverTimer
 
-                interval: 700
+                interval: 750
                 repeat: false
                 onTriggered: {
                     if (barMouseArea.containsMouse && !barWindow.barExpanded)
@@ -114,7 +124,7 @@ PanelWindow {
                 states: [
                     State {
                         name: "visible"
-                        when: barWindow.barExpanded || (!barWindow.isHovered && barWindow.osdMode === "")
+                        when: barWindow.barExpanded || (!barWindow.isHovered && barWindow.osdMode === "" && barWindow.activeToastNotification === null)
 
                         PropertyChanges {
                             target: barClock
@@ -124,7 +134,7 @@ PanelWindow {
                     },
                     State {
                         name: "hidden"
-                        when: !barWindow.barExpanded && (barWindow.isHovered || barWindow.osdMode !== "")
+                        when: !barWindow.barExpanded && (barWindow.isHovered || barWindow.osdMode !== "" || barWindow.activeToastNotification !== null)
 
                         PropertyChanges {
                             target: barClock
@@ -163,6 +173,17 @@ PanelWindow {
 
                     }
                 ]
+            }
+
+            MouseArea {
+                id: clockClickArea
+                anchors.fill: barClock
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    hoverTimer.stop();
+                    barWindow.barExpanded = !barWindow.barExpanded;
+                    barWindow.isHovered = false;
+                }
             }
 
             // Morphing OSD Toast Content inside Bar Capsule
@@ -308,7 +329,7 @@ PanelWindow {
                 states: [
                     State {
                         name: "visible"
-                        when: barWindow.isHovered && !barWindow.barExpanded && barBg.width > 220
+                        when: barWindow.isHovered && !barWindow.barExpanded && barBg.width > 220 && (playerWidget.activePlayer === null || playerWidget.title === "")
 
                         PropertyChanges {
                             target: hoverContent
@@ -318,7 +339,7 @@ PanelWindow {
                     },
                     State {
                         name: "hidden"
-                        when: !barWindow.isHovered || barWindow.barExpanded || barBg.width <= 220
+                        when: !barWindow.isHovered || barWindow.barExpanded || barBg.width <= 220 || (playerWidget.activePlayer !== null && playerWidget.title !== "")
 
                         PropertyChanges {
                             target: hoverContent
@@ -562,6 +583,319 @@ PanelWindow {
                     transparentBg: true
                 }
 
+            }
+
+            // --- Hover State Player Content (When Music is Playing) ---
+            Item {
+                id: hoverPlayerContent
+
+                anchors.fill: parent
+                visible: opacity > 0
+                states: [
+                    State {
+                        name: "visible"
+                        when: barWindow.isHovered && !barWindow.barExpanded && barBg.width > 220 && playerWidget.activePlayer !== null && playerWidget.title !== ""
+
+                        PropertyChanges {
+                            target: hoverPlayerContent
+                            opacity: 1
+                        }
+                    },
+                    State {
+                        name: "hidden"
+                        when: !barWindow.isHovered || barWindow.barExpanded || barBg.width <= 220 || playerWidget.activePlayer === null || playerWidget.title === ""
+
+                        PropertyChanges {
+                            target: hoverPlayerContent
+                            opacity: 0
+                        }
+                    }
+                ]
+                transitions: [
+                    Transition {
+                        from: "hidden"
+                        to: "visible"
+
+                        NumberAnimation {
+                            properties: "opacity"
+                            duration: 100
+                            easing.type: Easing.OutQuad
+                        }
+                    },
+                    Transition {
+                        from: "visible"
+                        to: "hidden"
+
+                        NumberAnimation {
+                            properties: "opacity"
+                            duration: 0
+                        }
+                    }
+                ]
+
+                // Album Art on Left
+                Rectangle {
+                    id: hoverPlayerArt
+                    width: 44
+                    height: 44
+                    radius: 8
+                    color: Style.surface1
+                    anchors.left: parent.left
+                    anchors.leftMargin: 16
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Image {
+                        anchors.fill: parent
+                        source: (playerWidget.localArtUrl !== "") ? playerWidget.localArtUrl : ""
+                        fillMode: Image.PreserveAspectCrop
+                        visible: source !== "" && status === Image.Ready
+                        asynchronous: true
+                    }
+
+                    Text {
+                        text: "music_note"
+                        color: Style.subtext1
+                        font.family: "Material Symbols Rounded"
+                        font.pixelSize: 18
+                        anchors.centerIn: parent
+                        visible: playerWidget.localArtUrl === ""
+                    }
+                }
+
+                // Controls on Right
+                Row {
+                    id: hoverPlayerControls
+                    anchors.right: parent.right
+                    anchors.rightMargin: 16
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 12
+
+                    // Previous Track
+                    MouseArea {
+                        width: 24
+                        height: 24
+                        anchors.verticalCenter: parent.verticalCenter
+                        cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+                        onClicked: playerWidget.prevTrack()
+
+                        Text {
+                            text: "skip_previous"
+                            color: parent.containsMouse ? Style.mauve : Style.text
+                            font.family: "Material Symbols Rounded"
+                            font.pixelSize: 20
+                            anchors.centerIn: parent
+                        }
+                    }
+
+                    // Play/Pause Circle
+                    Rectangle {
+                        id: hoverPlayButton
+                        width: 32
+                        height: 32
+                        radius: 16
+                        color: hoverPlayMouse.containsMouse ? "#f5e0dc" : "#ffffff"
+                        anchors.verticalCenter: parent.verticalCenter
+                        scale: hoverPlayMouse.containsMouse ? 1.08 : 1
+
+                        Text {
+                            text: playerWidget.isPlaying ? "pause" : "play_arrow"
+                            color: "#11111b"
+                            font.family: "Material Symbols Rounded"
+                            font.pixelSize: 16
+                            anchors.centerIn: parent
+                        }
+
+                        MouseArea {
+                            id: hoverPlayMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: playerWidget.togglePlay()
+                        }
+
+                        Behavior on scale {
+                            NumberAnimation { duration: 150; easing.type: Easing.OutBack }
+                        }
+                    }
+
+                    // Next Track
+                    MouseArea {
+                        width: 24
+                        height: 24
+                        anchors.verticalCenter: parent.verticalCenter
+                        cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+                        onClicked: playerWidget.nextTrack()
+
+                        Text {
+                            text: "skip_next"
+                            color: parent.containsMouse ? Style.mauve : Style.text
+                            font.family: "Material Symbols Rounded"
+                            font.pixelSize: 20
+                            anchors.centerIn: parent
+                        }
+                    }
+                }
+
+                // Middle Text Details
+                Column {
+                    anchors.left: hoverPlayerArt.right
+                    anchors.right: hoverPlayerControls.left
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 2
+
+                    Text {
+                        text: playerWidget.title
+                        color: Style.text
+                        font.family: Style.fontFamily
+                        font.pixelSize: 12
+                        font.bold: true
+                        width: parent.width
+                        elide: Text.ElideRight
+                    }
+
+                    Text {
+                        text: playerWidget.artist
+                        color: Style.subtext0
+                        font.family: Style.fontFamily
+                        font.pixelSize: 10
+                        width: parent.width
+                        elide: Text.ElideRight
+                        visible: playerWidget.artist !== ""
+                    }
+                }
+            }
+
+            // --- Hover State Notification Toast Content (When Notification arrives) ---
+            Item {
+                id: hoverNotifContent
+
+                anchors.fill: parent
+                visible: opacity > 0
+                states: [
+                    State {
+                        name: "visible"
+                        when: !barWindow.barExpanded && barBg.width > 220 && barWindow.activeToastNotification !== null && !barWindow.isHovered
+
+                        PropertyChanges {
+                            target: hoverNotifContent
+                            opacity: 1
+                        }
+                    },
+                    State {
+                        name: "hidden"
+                        when: barWindow.barExpanded || barBg.width <= 220 || barWindow.activeToastNotification === null || barWindow.isHovered
+
+                        PropertyChanges {
+                            target: hoverNotifContent
+                            opacity: 0
+                        }
+                    }
+                ]
+                transitions: [
+                    Transition {
+                        from: "hidden"
+                        to: "visible"
+
+                        NumberAnimation {
+                            properties: "opacity"
+                            duration: 100
+                            easing.type: Easing.OutQuad
+                        }
+                    },
+                    Transition {
+                        from: "visible"
+                        to: "hidden"
+
+                        NumberAnimation {
+                            properties: "opacity"
+                            duration: 0
+                        }
+                    }
+                ]
+
+                // Bell Icon on Left
+                Text {
+                    id: notifBellIcon
+                    text: "notifications"
+                    color: Style.mauve
+                    font.family: "Material Symbols Rounded"
+                    font.pixelSize: 20
+                    anchors.left: parent.left
+                    anchors.leftMargin: 16
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                // Close Button on Right
+                MouseArea {
+                    id: notifCloseBtn
+                    width: 24
+                    height: 24
+                    anchors.right: parent.right
+                    anchors.rightMargin: 16
+                    anchors.verticalCenter: parent.verticalCenter
+                    cursorShape: Qt.PointingHandCursor
+                    hoverEnabled: true
+                    onClicked: {
+                        barWindow.activeToastNotification = null;
+                    }
+
+                    Text {
+                        text: "close"
+                        color: parent.containsMouse ? Style.mauve : Style.text
+                        font.family: "Material Symbols Rounded"
+                        font.pixelSize: 16
+                        anchors.centerIn: parent
+                    }
+                }
+
+                // Notification Content Column
+                Column {
+                    anchors.left: notifBellIcon.right
+                    anchors.right: notifCloseBtn.left
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 1
+
+                    // App Name & Summary Row
+                    Row {
+                        spacing: 6
+                        width: parent.width
+
+                        Text {
+                            text: (barWindow.activeToastNotification !== null && barWindow.activeToastNotification.appName) ? barWindow.activeToastNotification.appName : "Notification"
+                            color: Style.mauve
+                            font.family: Style.fontFamily
+                            font.pixelSize: 9
+                            font.bold: true
+                            elide: Text.ElideRight
+                            width: Math.min(implicitWidth, parent.width * 0.4)
+                        }
+
+                        Text {
+                            text: (barWindow.activeToastNotification !== null && barWindow.activeToastNotification.summary) ? barWindow.activeToastNotification.summary : ""
+                            color: Style.text
+                            font.family: Style.fontFamily
+                            font.pixelSize: 11
+                            font.bold: true
+                            elide: Text.ElideRight
+                            width: parent.width - x
+                        }
+                    }
+
+                    Text {
+                        text: (barWindow.activeToastNotification !== null && barWindow.activeToastNotification.body) ? barWindow.activeToastNotification.body : ""
+                        color: Style.subtext1
+                        font.family: Style.fontFamily
+                        font.pixelSize: 10
+                        width: parent.width
+                        elide: Text.ElideRight
+                    }
+                }
             }
 
         }

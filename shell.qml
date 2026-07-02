@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Services.Notifications
 import "modules"
 
 ShellRoot {
@@ -88,6 +89,40 @@ ShellRoot {
                     brightnessOsd.trigger(barWindow.brightnessWidget.brightness);
                 }
             }
+        }
+    }
+
+    Notifications {
+        id: notificationWindow
+    }
+
+    NotificationServer {
+        id: globalNotifServer
+        onNotification: (n) => {
+            console.log("Global received notification! summary:", n.summary);
+            n.tracked = true;
+            if (!barWindow.barExpanded) {
+                barWindow.activeToastNotification = {
+                    appName: n.appName,
+                    summary: n.summary,
+                    body: n.body
+                };
+                barWindow.restartToastTimer();
+            }
+            notificationWindow.activeNotificationsCount = globalNotifServer.trackedNotifications.rowCount();
+        }
+    }
+
+    Connections {
+        target: globalNotifServer.trackedNotifications
+        function onRowsInserted() {
+            notificationWindow.activeNotificationsCount = globalNotifServer.trackedNotifications.rowCount();
+        }
+        function onRowsRemoved() {
+            notificationWindow.activeNotificationsCount = globalNotifServer.trackedNotifications.rowCount();
+        }
+        function onModelReset() {
+            notificationWindow.activeNotificationsCount = globalNotifServer.trackedNotifications.rowCount();
         }
     }
 }
