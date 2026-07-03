@@ -87,7 +87,7 @@ PopupWindow {
     Timer {
         id: destroyTimer
 
-        interval: 300
+        interval: 800
         repeat: false
         onTriggered: playerPopupLoader.active = false
     }
@@ -431,27 +431,27 @@ PopupWindow {
 
             Behavior on width {
                 NumberAnimation {
-                    duration: Style.durationExpressiveDefaultSpatial
+                    duration: Style.durationExpressiveSlowSpatial
                     easing.type: Easing.Bezier
-                    easing.bezierCurve: Style.expressiveDefaultSpatialCurve
+                    easing.bezierCurve: Style.expressiveSlowSpatialCurve
                 }
 
             }
 
             Behavior on height {
                 NumberAnimation {
-                    duration: Style.durationExpressiveDefaultSpatial
+                    duration: Style.durationExpressiveSlowSpatial
                     easing.type: Easing.Bezier
-                    easing.bezierCurve: Style.expressiveDefaultSpatialCurve
+                    easing.bezierCurve: Style.expressiveSlowSpatialCurve
                 }
 
             }
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: Style.durationExpressiveDefaultEffects
+                    duration: Style.durationExpressiveSlowEffects
                     easing.type: Easing.Bezier
-                    easing.bezierCurve: Style.expressiveDefaultEffectsCurve
+                    easing.bezierCurve: Style.expressiveSlowEffectsCurve
                 }
 
             }

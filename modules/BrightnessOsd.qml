@@ -86,7 +86,7 @@ PanelWindow {
 
                     return "brightness_high";
                 }
-                color: Style.yellow
+                color: Style.lavender
                 font.family: "Material Symbols Rounded"
                 font.pixelSize: 20
                 verticalAlignment: Text.AlignVCenter
@@ -103,7 +103,7 @@ PanelWindow {
                     width: parent.width * (osdWindow.currentBrightness / 100)
                     height: parent.height
                     radius: 2
-                    color: Style.yellow
+                    color: Style.lavender
 
                     Behavior on width {
                         NumberAnimation {

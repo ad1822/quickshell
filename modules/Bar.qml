@@ -21,6 +21,18 @@ PanelWindow {
     property bool osdMuted: false
     property int osdBrightness: 0
 
+    onOsdModeChanged: {
+        if (osdMode !== "" && !barExpanded) {
+            isHovered = false;
+        }
+    }
+
+    onActiveToastNotificationChanged: {
+        if (activeToastNotification !== null && !barExpanded) {
+            isHovered = false;
+        }
+    }
+
     function restartToastTimer() {
         barNotifToastTimer.restart();
     }
@@ -108,7 +120,7 @@ PanelWindow {
                 interval: 750
                 repeat: false
                 onTriggered: {
-                    if (barMouseArea.containsMouse && !barWindow.barExpanded)
+                    if (barMouseArea.containsMouse && !barWindow.barExpanded && barWindow.osdMode === "" && barWindow.activeToastNotification === null)
                         barWindow.isHovered = true;
 
                 }
@@ -180,6 +192,7 @@ PanelWindow {
 
                 anchors.fill: barClock
                 cursorShape: Qt.PointingHandCursor
+                enabled: barClock.opacity > 0.9
                 onClicked: {
                     hoverTimer.stop();
                     barWindow.barExpanded = !barWindow.barExpanded;
@@ -280,7 +293,7 @@ PanelWindow {
                             if (barWindow.osdMode === "volume")
                                 return barWindow.osdMuted ? Style.red : Style.mauve;
                             else
-                                return Style.yellow;
+                                return Style.lavender;
                         }
                         font.family: "Material Symbols Rounded"
                         font.pixelSize: 16
@@ -301,7 +314,7 @@ PanelWindow {
                                 if (barWindow.osdMode === "volume")
                                     return barWindow.osdMuted ? Style.overlay1 : Style.mauve;
                                 else
-                                    return Style.yellow;
+                                    return Style.lavender;
                             }
                             width: parent.width * ((barWindow.osdMode === "volume" ? barWindow.osdVolume : barWindow.osdBrightness) / 100)
 
@@ -916,6 +929,39 @@ PanelWindow {
                         }
                     }
 
+                }
+
+                MouseArea {
+                    anchors.left: parent.left
+                    anchors.right: notifCloseBtn.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    cursorShape: {
+                        if (barWindow.activeToastNotification) {
+                            var appName = (barWindow.activeToastNotification.appName || "").toLowerCase();
+                            var isBrowser = (appName.indexOf("firefox") !== -1 ||
+                                             appName.indexOf("chrome") !== -1 ||
+                                             appName.indexOf("chromium") !== -1 ||
+                                             appName.indexOf("zen") !== -1 ||
+                                             appName.indexOf("web") !== -1);
+                            return isBrowser ? Qt.PointingHandCursor : Qt.ArrowCursor;
+                        }
+                        return Qt.ArrowCursor;
+                    }
+                    onClicked: {
+                        if (barWindow.activeToastNotification) {
+                            var appName = (barWindow.activeToastNotification.appName || "").toLowerCase();
+                            var isBrowser = (appName.indexOf("firefox") !== -1 ||
+                                             appName.indexOf("chrome") !== -1 ||
+                                             appName.indexOf("chromium") !== -1 ||
+                                             appName.indexOf("zen") !== -1 ||
+                                             appName.indexOf("web") !== -1);
+                            if (isBrowser) {
+                                barWindow.activeToastNotification.invokeAction("default");
+                                barWindow.activeToastNotification = null;
+                            }
+                        }
+                    }
                 }
 
                 // Notification Content Column
