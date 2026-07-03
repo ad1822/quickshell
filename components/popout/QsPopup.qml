@@ -304,6 +304,9 @@ PopupWindow {
                                         if (barVolumeWidget.isMuted)
                                             return "volume_off";
 
+                                        if (barVolumeWidget.isHeadphones)
+                                            return "headphones";
+
                                         if (barVolumeWidget.volume < 33)
                                             return "volume_down";
 

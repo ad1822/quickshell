@@ -50,7 +50,7 @@ ShellRoot {
                 if (!barWindow.barExpanded && !barWindow.isHovered) {
                     barWindow.triggerBarOsd("volume", barWindow.volumeWidget.volume, barWindow.volumeWidget.isMuted);
                 } else {
-                    volumeOsd.trigger(barWindow.volumeWidget.volume, barWindow.volumeWidget.isMuted);
+                    volumeOsd.trigger(barWindow.volumeWidget.volume, barWindow.volumeWidget.isMuted, barWindow.volumeWidget.isHeadphones);
                 }
             }
         }
@@ -64,7 +64,21 @@ ShellRoot {
                 if (!barWindow.barExpanded && !barWindow.isHovered) {
                     barWindow.triggerBarOsd("volume", barWindow.volumeWidget.volume, barWindow.volumeWidget.isMuted);
                 } else {
-                    volumeOsd.trigger(barWindow.volumeWidget.volume, barWindow.volumeWidget.isMuted);
+                    volumeOsd.trigger(barWindow.volumeWidget.volume, barWindow.volumeWidget.isMuted, barWindow.volumeWidget.isHeadphones);
+                }
+            }
+        }
+
+        function onIsHeadphonesChanged() {
+            if (!initialized) {
+                initialized = true;
+                return;
+            }
+            if (!barWindow.volumeWidget.isAdjusting) {
+                if (!barWindow.barExpanded && !barWindow.isHovered) {
+                    barWindow.triggerBarOsd("volume", barWindow.volumeWidget.volume, barWindow.volumeWidget.isMuted);
+                } else {
+                    volumeOsd.trigger(barWindow.volumeWidget.volume, barWindow.volumeWidget.isMuted, barWindow.volumeWidget.isHeadphones);
                 }
             }
         }

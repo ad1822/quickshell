@@ -14,6 +14,7 @@ PanelWindow {
     property bool barExpanded: false
     property bool isHovered: false
     property var activeToastNotification: null
+    readonly property bool toastHasBody: activeToastNotification !== null && activeToastNotification.body && activeToastNotification.body !== ""
     property alias volumeWidget: barVolumeWidget
     property alias brightnessWidget: barBrightnessWidget
     property string osdMode: "" // "", "volume", "brightness"
@@ -63,7 +64,7 @@ PanelWindow {
     anchors.top: true
     anchors.left: true
     anchors.right: true
-    implicitHeight: barWindow.barExpanded ? 30 : ((barWindow.isHovered || barWindow.activeToastNotification !== null) ? 64 : 30)
+    implicitHeight: barWindow.barExpanded ? 30 : ((barWindow.isHovered || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? 64 : 30)
     margins.top: barWindow.barExpanded ? 0 : 4
     color: "transparent"
     WlrLayershell.exclusiveZone: 30
@@ -93,10 +94,10 @@ PanelWindow {
 
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        height: barWindow.barExpanded ? 30 : ((barWindow.isHovered || barWindow.activeToastNotification !== null) ? 64 : 30)
+        height: barWindow.barExpanded ? 30 : ((barWindow.isHovered || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? 64 : 30)
         color: "#11111b"
-        width: barWindow.barExpanded ? parent.width : ((barWindow.isHovered || barWindow.activeToastNotification !== null) ? 360 : (barWindow.osdMode !== "" ? 170 : (barClock.width + 10)))
-        radius: barWindow.barExpanded ? 0 : ((barWindow.isHovered || barWindow.activeToastNotification !== null) ? 24 : 24)
+        width: barWindow.barExpanded ? parent.width : ((barWindow.isHovered || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? 360 : (barWindow.activeToastNotification !== null ? 220 : (barWindow.osdMode !== "" ? 170 : (barClock.width + 10))))
+        radius: barWindow.barExpanded ? 0 : ((barWindow.isHovered || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? 24 : 15)
         clip: true
 
         MouseArea {
@@ -267,6 +268,9 @@ PanelWindow {
                             if (barWindow.osdMode === "volume") {
                                 if (barWindow.osdMuted || barWindow.osdVolume <= 0)
                                     return "volume_off";
+
+                                if (barVolumeWidget.isHeadphones)
+                                    return "headphones";
 
                                 if (barWindow.osdVolume < 33)
                                     return "volume_down";
@@ -811,7 +815,7 @@ PanelWindow {
                 states: [
                     State {
                         name: "visible"
-                        when: !barWindow.barExpanded && barBg.width > 220 && barWindow.activeToastNotification !== null && !barWindow.isHovered
+                        when: !barWindow.barExpanded && barBg.width > 160 && barWindow.activeToastNotification !== null && !barWindow.isHovered
 
                         PropertyChanges {
                             target: hoverNotifContent
@@ -821,7 +825,7 @@ PanelWindow {
                     },
                     State {
                         name: "hidden"
-                        when: barWindow.barExpanded || barBg.width <= 220 || barWindow.activeToastNotification === null || barWindow.isHovered
+                        when: barWindow.barExpanded || barBg.width <= 160 || barWindow.activeToastNotification === null || barWindow.isHovered
 
                         PropertyChanges {
                             target: hoverNotifContent
@@ -848,7 +852,7 @@ PanelWindow {
 
                         NumberAnimation {
                             properties: "opacity"
-                            duration: 0
+                            duration: 100
                         }
 
                     }
@@ -858,10 +862,10 @@ PanelWindow {
                 Item {
                     id: notifIcon
 
-                    width: 20
-                    height: 20
+                    width: barWindow.toastHasBody ? 20 : 12
+                    height: barWindow.toastHasBody ? 20 : 12
                     anchors.left: parent.left
-                    anchors.leftMargin: 16
+                    anchors.leftMargin: barWindow.toastHasBody ? 16 : 10
                     anchors.verticalCenter: parent.verticalCenter
 
                     Image {
@@ -888,9 +892,9 @@ PanelWindow {
                     Text {
                         anchors.fill: parent
                         text: "notifications"
-                        color: Style.mauve
+                        color: barWindow.toastHasBody ? Style.mauve : "#ffffff"
                         font.family: "Material Symbols Rounded"
-                        font.pixelSize: 20
+                        font.pixelSize: barWindow.toastHasBody ? 20 : 12
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         visible: !notifAppIcon.visible
@@ -898,23 +902,24 @@ PanelWindow {
 
                 }
 
-                // Styled Close Button on Right
+                // Styled Close Button on Right (only visible when notification has a body)
                 Rectangle {
                     id: notifCloseBtn
 
-                    width: 24
-                    height: 24
-                    radius: 12
+                    width: barWindow.toastHasBody ? 24 : 18
+                    height: barWindow.toastHasBody ? 24 : 18
+                    radius: barWindow.toastHasBody ? 12 : 9
                     color: closeMouseArea.containsMouse ? Qt.rgba(243 / 255, 139 / 255, 168 / 255, 0.15) : "transparent"
                     anchors.right: parent.right
-                    anchors.rightMargin: 16
+                    anchors.rightMargin: barWindow.toastHasBody ? 16 : 10
                     anchors.verticalCenter: parent.verticalCenter
+                    visible: barWindow.toastHasBody
 
                     Text {
                         text: "close"
                         color: closeMouseArea.containsMouse ? Style.red : Style.overlay1
                         font.family: "Material Symbols Rounded"
-                        font.pixelSize: 16
+                        font.pixelSize: barWindow.toastHasBody ? 16 : 12
                         anchors.centerIn: parent
                     }
 
@@ -933,7 +938,7 @@ PanelWindow {
 
                 MouseArea {
                     anchors.left: parent.left
-                    anchors.right: notifCloseBtn.left
+                    anchors.right: barWindow.toastHasBody ? notifCloseBtn.left : parent.right
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
                     cursorShape: {
@@ -967,18 +972,19 @@ PanelWindow {
                 // Notification Content Column
                 Column {
                     anchors.left: notifIcon.right
-                    anchors.right: notifCloseBtn.left
-                    anchors.leftMargin: 12
-                    anchors.rightMargin: 12
+                    anchors.right: barWindow.toastHasBody ? notifCloseBtn.left : parent.right
+                    anchors.leftMargin: barWindow.toastHasBody ? 12 : 8
+                    anchors.rightMargin: barWindow.toastHasBody ? 12 : 12
                     anchors.verticalCenter: parent.verticalCenter
+                    anchors.verticalCenterOffset: (barWindow.activeToastNotification !== null && barWindow.toastHasBody) ? 0 : 1
                     spacing: 1
 
                     // Summary (Title)
                     Text {
                         text: (barWindow.activeToastNotification !== null && barWindow.activeToastNotification.summary) ? barWindow.activeToastNotification.summary : ""
-                        color: Style.text
+                        color: barWindow.toastHasBody ? Style.text : "#ffffff"
                         font.family: Style.fontFamily
-                        font.pixelSize: 13
+                        font.pixelSize: barWindow.toastHasBody ? 13 : 10
                         font.bold: true
                         elide: Text.ElideRight
                         width: parent.width
@@ -992,6 +998,7 @@ PanelWindow {
                         font.pixelSize: 11
                         width: parent.width
                         elide: Text.ElideRight
+                        visible: text !== ""
                     }
 
                 }

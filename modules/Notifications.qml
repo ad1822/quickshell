@@ -28,7 +28,6 @@ PopupWindow {
     onActiveNotificationsCountChanged: {
         checkState();
     }
-
     anchor.window: barWindow
     anchor.rect.x: (barWindow.width / 2) - 204
     anchor.rect.y: barWindow.height
@@ -67,7 +66,7 @@ PopupWindow {
         id: notifWindowContent
 
         anchors.fill: parent
-        visible: notifColumn.implicitHeight > 0
+        visible: true
 
         // Left Fillet
         Shape {
@@ -76,14 +75,13 @@ PopupWindow {
             width: 24
             height: 24
             anchors.right: notifContainer.left
+            anchors.rightMargin: -1
             anchors.top: notifContainer.top
             opacity: notifContainer.opacity
             visible: opacity > 0.01
-            layer.enabled: true
-            layer.samples: 4
 
             ShapePath {
-                fillColor: "#11111b"
+                fillColor: Style.crust
                 strokeColor: "transparent"
                 startX: 0
                 startY: 0
@@ -117,14 +115,13 @@ PopupWindow {
             width: 24
             height: 24
             anchors.left: notifContainer.right
+            anchors.leftMargin: -1
             anchors.top: notifContainer.top
             opacity: notifContainer.opacity
             visible: opacity > 0.01
-            layer.enabled: true
-            layer.samples: 4
 
             ShapePath {
-                fillColor: "#11111b"
+                fillColor: Style.crust
                 strokeColor: "transparent"
                 startX: 24
                 startY: 0
@@ -161,40 +158,15 @@ PopupWindow {
 
             readonly property int collapsedWidth: 40
             readonly property int collapsedHeight: 20
-            readonly property int expandedWidth: 360
+            readonly property int expandedWidth: 340
             readonly property real expandedHeight: notifColumn.implicitHeight > 0 ? notifColumn.implicitHeight + 12 : 20
 
             anchors.horizontalCenter: parent.horizontalCenter
             y: 0
             clip: true
-
             width: entranceActive ? expandedWidth : collapsedWidth
             height: entranceActive ? expandedHeight : collapsedHeight
             opacity: entranceActive ? 1 : 0
-
-            Behavior on width {
-                NumberAnimation {
-                    duration: Style.durationExpressiveSlowSpatial
-                    easing.type: Easing.Bezier
-                    easing.bezierCurve: Style.expressiveSlowSpatialCurve
-                }
-            }
-
-            Behavior on height {
-                NumberAnimation {
-                    duration: Style.durationExpressiveSlowSpatial
-                    easing.type: Easing.Bezier
-                    easing.bezierCurve: Style.expressiveSlowSpatialCurve
-                }
-            }
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: Style.durationExpressiveSlowEffects
-                    easing.type: Easing.Bezier
-                    easing.bezierCurve: Style.expressiveSlowEffectsCurve
-                }
-            }
 
             Rectangle {
                 id: notifBg
@@ -205,7 +177,7 @@ PopupWindow {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 radius: 24
-                color: "#11111b"
+                color: Style.crust
             }
 
             Column {
@@ -226,8 +198,8 @@ PopupWindow {
                         id: delegateRoot
 
                         // Fully expanded target geometry
-                        readonly property int expandedWidth: 336
-                        readonly property int expandedHeight: 68
+                        readonly property int expandedWidth: 316
+                        readonly property int expandedHeight: Math.max(56, textColumn.implicitHeight + 24)
                         readonly property int expandedRadius: 20
 
                         function getIconSource() {
@@ -247,9 +219,7 @@ PopupWindow {
 
                         anchors.horizontalCenter: parent.horizontalCenter
                         clip: true
-                        color: "#11111b"
-                        border.color: Style.surface0
-                        border.width: 0
+                        color: Style.crust
                         radius: expandedRadius
                         scale: 1
                         transformOrigin: Item.Center
@@ -298,7 +268,7 @@ PopupWindow {
                                 PropertyChanges {
                                     target: delegateRoot
                                     width: delegateRoot.expandedWidth
-                                    height: delegateRoot.expandedHeight
+                                    height: 0
                                     radius: delegateRoot.expandedRadius
                                     opacity: 0
                                     scale: 0.9
@@ -329,11 +299,23 @@ PopupWindow {
                                 to: "exiting"
 
                                 SequentialAnimation {
-                                    NumberAnimation {
-                                        properties: "opacity,scale"
-                                        to: 0
-                                        duration: 180
-                                        easing.type: Easing.InQuad
+                                    ParallelAnimation {
+                                        NumberAnimation {
+                                            target: delegateRoot
+                                            properties: "opacity,scale"
+                                            to: 0
+                                            duration: 180
+                                            easing.type: Easing.InQuad
+                                        }
+
+                                        NumberAnimation {
+                                            target: delegateRoot
+                                            property: "height"
+                                            to: 0
+                                            duration: 220
+                                            easing.type: Easing.InOutQuad
+                                        }
+
                                     }
 
                                     ScriptAction {
@@ -365,8 +347,10 @@ PopupWindow {
                                 width: 20
                                 height: 20
                                 anchors.right: parent.right
-                                anchors.rightMargin: 12
-                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.rightMargin: 8
+                                anchors.top: (modelData.body && modelData.body !== "") ? parent.top : undefined
+                                anchors.topMargin: (modelData.body && modelData.body !== "") ? 12 : 0
+                                anchors.verticalCenter: (modelData.body && modelData.body !== "") ? undefined : parent.verticalCenter
                                 cursorShape: Qt.PointingHandCursor
                                 hoverEnabled: true
                                 onClicked: delegateRoot.state = "exiting"
@@ -381,44 +365,68 @@ PopupWindow {
 
                             }
 
-                            Image {
-                                id: appIcon
+                            Rectangle {
+                                id: appIconContainer
 
-                                source: delegateRoot.getIconSource()
                                 width: 32
                                 height: 32
+                                radius: 8
+                                color: "transparent"
+                                clip: true
                                 anchors.left: parent.left
-                                anchors.leftMargin: 16
-                                anchors.verticalCenter: parent.verticalCenter
-                                fillMode: Image.PreserveAspectFit
-                                smooth: true
-                                visible: source !== ""
+                                anchors.leftMargin: 12
+                                anchors.top: (modelData.body && modelData.body !== "") ? parent.top : undefined
+                                anchors.topMargin: (modelData.body && modelData.body !== "") ? 12 : 0
+                                anchors.verticalCenter: (modelData.body && modelData.body !== "") ? undefined : parent.verticalCenter
+                                visible: delegateRoot.getIconSource() !== ""
+
+                                Image {
+                                    id: appIcon
+
+                                    source: delegateRoot.getIconSource()
+                                    anchors.fill: parent
+                                    fillMode: Image.PreserveAspectFit
+                                    smooth: true
+                                }
+
+                            }
+
+                            Rectangle {
+                                id: fallbackIconContainer
+
+                                width: 32
+                                height: 32
+                                radius: 8
+                                color: Style.crust
+                                anchors.left: parent.left
+                                anchors.leftMargin: 12
+                                anchors.top: (modelData.body && modelData.body !== "") ? parent.top : undefined
+                                anchors.topMargin: (modelData.body && modelData.body !== "") ? 12 : 0
+                                anchors.verticalCenter: (modelData.body && modelData.body !== "") ? undefined : parent.verticalCenter
+                                visible: !appIconContainer.visible
+
+                                Text {
+                                    text: "notifications"
+                                    color: Style.mauve
+                                    font.family: "Material Symbols Rounded"
+                                    font.pixelSize: 20
+                                    anchors.centerIn: parent
+                                }
+
                             }
 
                             Column {
                                 id: textColumn
 
-                                anchors.left: appIcon.visible ? appIcon.right : parent.left
+                                anchors.left: appIconContainer.visible ? appIconContainer.right : fallbackIconContainer.right
                                 anchors.right: closeButton.left
-                                anchors.leftMargin: appIcon.visible ? 10 : 16
-                                anchors.rightMargin: 12
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: 2
-
-                                Row {
-                                    spacing: 6
-                                    width: parent.width
-
-                                    Text {
-                                        text: modelData.appName || "Notification"
-                                        color: Style.mauve
-                                        font.family: Style.fontFamily
-                                        font.pixelSize: 10
-                                        font.weight: Font.Bold
-                                        elide: Text.ElideRight
-                                    }
-
-                                }
+                                anchors.leftMargin: 8
+                                anchors.rightMargin: 8
+                                anchors.top: (modelData.body && modelData.body !== "") ? parent.top : undefined
+                                anchors.topMargin: (modelData.body && modelData.body !== "") ? 12 : 0
+                                anchors.verticalCenter: (modelData.body && modelData.body !== "") ? undefined : parent.verticalCenter
+                                anchors.verticalCenterOffset: (modelData.body && modelData.body !== "") ? 0 : 8
+                                spacing: 1
 
                                 Text {
                                     text: modelData.summary || ""
@@ -437,7 +445,7 @@ PopupWindow {
                                     font.pixelSize: 11
                                     width: parent.width
                                     wrapMode: Text.Wrap
-                                    maximumLineCount: 3
+                                    maximumLineCount: 20
                                     elide: Text.ElideRight
                                 }
 
@@ -458,6 +466,31 @@ PopupWindow {
                         easing.overshoot: 0.6
                     }
 
+                }
+
+            }
+
+            Behavior on width {
+                NumberAnimation {
+                    duration: 350
+                    easing.type: Easing.OutBack
+                    easing.overshoot: 0.6
+                }
+
+            }
+
+            Behavior on height {
+                NumberAnimation {
+                    duration: 300
+                    easing.type: Easing.OutCubic
+                }
+
+            }
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 200
+                    easing.type: Easing.OutQuad
                 }
 
             }
