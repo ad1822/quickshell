@@ -12,7 +12,7 @@ Rectangle {
     implicitWidth: contentText.implicitWidth + 8
     implicitHeight: 22
     color: "transparent"
-    radius: 6
+    radius: 8
     Component.onCompleted: wifiProc.running = true
 
     Text {

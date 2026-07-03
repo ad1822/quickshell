@@ -26,7 +26,7 @@ Rectangle {
     implicitWidth: contentText.implicitWidth + 8
     implicitHeight: 22
     color: "transparent"
-    radius: 6
+    radius: 8
 
     Text {
         id: contentText

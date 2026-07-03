@@ -7,7 +7,7 @@ Rectangle {
     implicitWidth: 26
     implicitHeight: 22
     color: "transparent"
-    radius: 6
+    radius: 8
 
     Text {
         text: "wallpaper"

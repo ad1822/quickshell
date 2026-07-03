@@ -14,25 +14,16 @@ PanelWindow {
     property bool barExpanded: false
     property bool isHovered: false
     property var activeToastNotification: null
-
-    Timer {
-        id: barNotifToastTimer
-        interval: 3000
-        repeat: false
-        onTriggered: {
-            barWindow.activeToastNotification = null;
-        }
-    }
-
-    function restartToastTimer() {
-        barNotifToastTimer.restart();
-    }
     property alias volumeWidget: barVolumeWidget
     property alias brightnessWidget: barBrightnessWidget
     property string osdMode: "" // "", "volume", "brightness"
     property int osdVolume: 0
     property bool osdMuted: false
     property int osdBrightness: 0
+
+    function restartToastTimer() {
+        barNotifToastTimer.restart();
+    }
 
     function triggerBarOsd(type, val, extra) {
         if (type === "volume") {
@@ -66,6 +57,16 @@ PanelWindow {
     WlrLayershell.exclusiveZone: 30
 
     Timer {
+        id: barNotifToastTimer
+
+        interval: 3000
+        repeat: false
+        onTriggered: {
+            barWindow.activeToastNotification = null;
+        }
+    }
+
+    Timer {
         id: barOsdTimer
 
         interval: 1800
@@ -83,7 +84,7 @@ PanelWindow {
         height: barWindow.barExpanded ? 30 : ((barWindow.isHovered || barWindow.activeToastNotification !== null) ? 64 : 30)
         color: "#11111b"
         width: barWindow.barExpanded ? parent.width : ((barWindow.isHovered || barWindow.activeToastNotification !== null) ? 360 : (barWindow.osdMode !== "" ? 170 : (barClock.width + 10)))
-        radius: barWindow.barExpanded ? 0 : ((barWindow.isHovered || barWindow.activeToastNotification !== null) ? 12 : 6)
+        radius: barWindow.barExpanded ? 0 : ((barWindow.isHovered || barWindow.activeToastNotification !== null) ? 24 : 24)
         clip: true
 
         MouseArea {
@@ -100,7 +101,6 @@ PanelWindow {
                 hoverTimer.stop();
                 barWindow.isHovered = false;
             }
-
 
             Timer {
                 id: hoverTimer
@@ -177,6 +177,7 @@ PanelWindow {
 
             MouseArea {
                 id: clockClickArea
+
                 anchors.fill: barClock
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
@@ -600,6 +601,7 @@ PanelWindow {
                             target: hoverPlayerContent
                             opacity: 1
                         }
+
                     },
                     State {
                         name: "hidden"
@@ -609,6 +611,7 @@ PanelWindow {
                             target: hoverPlayerContent
                             opacity: 0
                         }
+
                     }
                 ]
                 transitions: [
@@ -621,6 +624,7 @@ PanelWindow {
                             duration: 100
                             easing.type: Easing.OutQuad
                         }
+
                     },
                     Transition {
                         from: "visible"
@@ -630,12 +634,14 @@ PanelWindow {
                             properties: "opacity"
                             duration: 0
                         }
+
                     }
                 ]
 
                 // Album Art on Left
                 Rectangle {
                     id: hoverPlayerArt
+
                     width: 44
                     height: 44
                     radius: 8
@@ -660,11 +666,13 @@ PanelWindow {
                         anchors.centerIn: parent
                         visible: playerWidget.localArtUrl === ""
                     }
+
                 }
 
                 // Controls on Right
                 Row {
                     id: hoverPlayerControls
+
                     anchors.right: parent.right
                     anchors.rightMargin: 16
                     anchors.verticalCenter: parent.verticalCenter
@@ -686,11 +694,13 @@ PanelWindow {
                             font.pixelSize: 20
                             anchors.centerIn: parent
                         }
+
                     }
 
                     // Play/Pause Circle
                     Rectangle {
                         id: hoverPlayButton
+
                         width: 32
                         height: 32
                         radius: 16
@@ -708,6 +718,7 @@ PanelWindow {
 
                         MouseArea {
                             id: hoverPlayMouse
+
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
@@ -715,8 +726,13 @@ PanelWindow {
                         }
 
                         Behavior on scale {
-                            NumberAnimation { duration: 150; easing.type: Easing.OutBack }
+                            NumberAnimation {
+                                duration: 150
+                                easing.type: Easing.OutBack
+                            }
+
                         }
+
                     }
 
                     // Next Track
@@ -735,7 +751,9 @@ PanelWindow {
                             font.pixelSize: 20
                             anchors.centerIn: parent
                         }
+
                     }
+
                 }
 
                 // Middle Text Details
@@ -766,7 +784,9 @@ PanelWindow {
                         elide: Text.ElideRight
                         visible: playerWidget.artist !== ""
                     }
+
                 }
+
             }
 
             // --- Hover State Notification Toast Content (When Notification arrives) ---
@@ -784,6 +804,7 @@ PanelWindow {
                             target: hoverNotifContent
                             opacity: 1
                         }
+
                     },
                     State {
                         name: "hidden"
@@ -793,6 +814,7 @@ PanelWindow {
                             target: hoverNotifContent
                             opacity: 0
                         }
+
                     }
                 ]
                 transitions: [
@@ -805,6 +827,7 @@ PanelWindow {
                             duration: 100
                             easing.type: Easing.OutQuad
                         }
+
                     },
                     Transition {
                         from: "visible"
@@ -814,88 +837,119 @@ PanelWindow {
                             properties: "opacity"
                             duration: 0
                         }
+
                     }
                 ]
 
-                // Bell Icon on Left
-                Text {
-                    id: notifBellIcon
-                    text: "notifications"
-                    color: Style.mauve
-                    font.family: "Material Symbols Rounded"
-                    font.pixelSize: 20
+                // Icon on Left
+                Item {
+                    id: notifIcon
+
+                    width: 20
+                    height: 20
                     anchors.left: parent.left
                     anchors.leftMargin: 16
                     anchors.verticalCenter: parent.verticalCenter
-                }
 
-                // Close Button on Right
-                MouseArea {
-                    id: notifCloseBtn
-                    width: 24
-                    height: 24
-                    anchors.right: parent.right
-                    anchors.rightMargin: 16
-                    anchors.verticalCenter: parent.verticalCenter
-                    cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    onClicked: {
-                        barWindow.activeToastNotification = null;
+                    Image {
+                        id: notifAppIcon
+
+                        anchors.fill: parent
+                        fillMode: Image.PreserveAspectFit
+                        visible: source != ""
+                        source: {
+                            if (barWindow.activeToastNotification && barWindow.activeToastNotification.icon) {
+                                var iconName = barWindow.activeToastNotification.icon;
+                                if (iconName.indexOf("/") === 0)
+                                    return "file://" + iconName;
+
+                                var resolved = Quickshell.iconPath(iconName);
+                                if (resolved)
+                                    return (resolved.toString().indexOf("/") === 0) ? "file://" + resolved : resolved;
+
+                            }
+                            return "";
+                        }
                     }
 
                     Text {
+                        anchors.fill: parent
+                        text: "notifications"
+                        color: Style.mauve
+                        font.family: "Material Symbols Rounded"
+                        font.pixelSize: 20
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        visible: !notifAppIcon.visible
+                    }
+
+                }
+
+                // Styled Close Button on Right
+                Rectangle {
+                    id: notifCloseBtn
+
+                    width: 24
+                    height: 24
+                    radius: 12
+                    color: closeMouseArea.containsMouse ? Qt.rgba(243 / 255, 139 / 255, 168 / 255, 0.15) : "transparent"
+                    anchors.right: parent.right
+                    anchors.rightMargin: 16
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Text {
                         text: "close"
-                        color: parent.containsMouse ? Style.mauve : Style.text
+                        color: closeMouseArea.containsMouse ? Style.red : Style.overlay1
                         font.family: "Material Symbols Rounded"
                         font.pixelSize: 16
                         anchors.centerIn: parent
                     }
+
+                    MouseArea {
+                        id: closeMouseArea
+
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+                        onClicked: {
+                            barWindow.activeToastNotification = null;
+                        }
+                    }
+
                 }
 
                 // Notification Content Column
                 Column {
-                    anchors.left: notifBellIcon.right
+                    anchors.left: notifIcon.right
                     anchors.right: notifCloseBtn.left
                     anchors.leftMargin: 12
                     anchors.rightMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 1
 
-                    // App Name & Summary Row
-                    Row {
-                        spacing: 6
+                    // Summary (Title)
+                    Text {
+                        text: (barWindow.activeToastNotification !== null && barWindow.activeToastNotification.summary) ? barWindow.activeToastNotification.summary : ""
+                        color: Style.text
+                        font.family: Style.fontFamily
+                        font.pixelSize: 13
+                        font.bold: true
+                        elide: Text.ElideRight
                         width: parent.width
-
-                        Text {
-                            text: (barWindow.activeToastNotification !== null && barWindow.activeToastNotification.appName) ? barWindow.activeToastNotification.appName : "Notification"
-                            color: Style.mauve
-                            font.family: Style.fontFamily
-                            font.pixelSize: 9
-                            font.bold: true
-                            elide: Text.ElideRight
-                            width: Math.min(implicitWidth, parent.width * 0.4)
-                        }
-
-                        Text {
-                            text: (barWindow.activeToastNotification !== null && barWindow.activeToastNotification.summary) ? barWindow.activeToastNotification.summary : ""
-                            color: Style.text
-                            font.family: Style.fontFamily
-                            font.pixelSize: 11
-                            font.bold: true
-                            elide: Text.ElideRight
-                            width: parent.width - x
-                        }
                     }
 
+                    // Body
                     Text {
                         text: (barWindow.activeToastNotification !== null && barWindow.activeToastNotification.body) ? barWindow.activeToastNotification.body : ""
                         color: Style.subtext1
                         font.family: Style.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: 11
                         width: parent.width
                         elide: Text.ElideRight
                     }
+
                 }
+
             }
 
         }
@@ -1094,7 +1148,7 @@ PanelWindow {
         anchors.verticalCenter: parent.verticalCenter
         width: 30
         height: 30
-        radius: 6
+        radius: 8
         color: "transparent"
         // color: hamburgerMouse.containsMouse ? Style.surface0 : Style.base
         border.color: Style.surface1

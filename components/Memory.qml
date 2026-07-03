@@ -12,7 +12,7 @@ Rectangle {
     implicitWidth: contentRow.implicitWidth + 16
     implicitHeight: 22
     color: "transparent"
-    radius: 6
+    radius: 8
 
     Row {
         id: contentRow

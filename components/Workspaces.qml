@@ -9,7 +9,7 @@ Rectangle {
     width: row.width + 20
     height: row.height + 20
     color: Style.mantle
-    radius: 6
+    radius: 8
 
     Item {
         id: container

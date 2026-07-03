@@ -210,7 +210,7 @@ print(json.dumps(apps))
         id: mainLayout
         width: parent.width
         height: searchRow.height + (spotlightWindow.filteredItems.length > 0 ? (divider.height + listContainer.height) : 0)
-        radius: 14
+        radius: 24
         color: Style.crust
         border.color: Style.surface1
         border.width: 1.5
