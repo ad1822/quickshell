@@ -9,8 +9,9 @@ PanelWindow {
 
     property int currentVolume: 0
     property bool isMuted: false
+    property bool isHeadphones: false
 
-    function trigger(vol, muted) {
+    function trigger(vol, muted, headphones) {
         if (Quickshell.screens && Hyprland.focusedMonitor) {
             for (var i = 0; i < Quickshell.screens.length; i++) {
                 if (Quickshell.screens[i].name === Hyprland.focusedMonitor.name) {
@@ -21,6 +22,7 @@ PanelWindow {
         }
         currentVolume = vol;
         isMuted = muted;
+        isHeadphones = headphones || false;
         dismissTimer.stop();
         osdWindow.visible = true; // Instantly map window on screen
         card.active = true; // Trigger slide-up animation
@@ -87,6 +89,9 @@ PanelWindow {
                 text: {
                     if (osdWindow.isMuted || osdWindow.currentVolume <= 0)
                         return "volume_off";
+
+                    if (osdWindow.isHeadphones)
+                        return "headphones";
 
                     if (osdWindow.currentVolume < 33)
                         return "volume_down";
