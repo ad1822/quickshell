@@ -1,8 +1,10 @@
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Io
 import Quickshell.Services.Notifications
 import "modules"
+
 
 ShellRoot {
     id: root
@@ -139,4 +141,20 @@ ShellRoot {
             notificationWindow.activeNotificationsCount = globalNotifServer.trackedNotifications.rowCount();
         }
     }
+
+    GlobalShortcut {
+        name: "powermenu"
+        description: "Toggle Powermenu"
+        onPressed: {
+            barWindow.togglePowermenu();
+        }
+    }
+
+    IpcHandler {
+        target: "powermenu"
+        function toggle(): void {
+            barWindow.togglePowermenu();
+        }
+    }
 }
+

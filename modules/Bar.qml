@@ -13,6 +13,7 @@ PanelWindow {
     property bool modulesExpanded: false
     property bool barExpanded: false
     property bool isHovered: false
+    property bool powermenuActive: false
     property var activeToastNotification: null
     readonly property bool toastHasBody: activeToastNotification !== null && activeToastNotification.body && activeToastNotification.body !== ""
     property alias volumeWidget: barVolumeWidget
@@ -34,6 +35,17 @@ PanelWindow {
         }
     }
 
+    onPowermenuActiveChanged: {
+        if (powermenuActive) {
+            if (!barExpanded) {
+                isHovered = false;
+                wrappedPowermenuDismissTimer.restart();
+            }
+        } else {
+            wrappedPowermenuDismissTimer.stop();
+        }
+    }
+
     function restartToastTimer() {
         barNotifToastTimer.restart();
     }
@@ -52,7 +64,10 @@ PanelWindow {
 
     // Close all popups except the one matching the given loader ID
     function closeAllPopupsExcept(exceptLoader) {
-        var loaders = [wifiPopupLoader, playerPopupLoader, qsPopupLoader, popupLoader, memPopupLoader, netPopupLoader];
+        if (exceptLoader !== powermenuPopupLoader) {
+            powermenuActive = false;
+        }
+        var loaders = [wifiPopupLoader, playerPopupLoader, qsPopupLoader, popupLoader, memPopupLoader, netPopupLoader, powermenuPopupLoader];
         for (var i = 0; i < loaders.length; i++) {
             var loader = loaders[i];
             if (loader && loader !== exceptLoader && loader.active)
@@ -61,10 +76,36 @@ PanelWindow {
         }
     }
 
+    function togglePowermenu() {
+        if (barExpanded) {
+            if (powermenuPopupLoader.active) {
+                if (powermenuPopupLoader.item) {
+                    powermenuPopupLoader.item.closePopup();
+                } else {
+                    powermenuPopupLoader.active = false;
+                }
+            } else {
+                powermenuPopupLoader.active = true;
+            }
+        } else {
+            powermenuActive = !powermenuActive;
+            if (powermenuActive) {
+                var loaders = [wifiPopupLoader, playerPopupLoader, qsPopupLoader, popupLoader, memPopupLoader, netPopupLoader, powermenuPopupLoader];
+                for (var i = 0; i < loaders.length; i++) {
+                    var loader = loaders[i];
+                    if (loader && loader.active)
+                        loader.active = false;
+                }
+            }
+        }
+    }
+
+
+
     anchors.top: true
     anchors.left: true
     anchors.right: true
-    implicitHeight: barWindow.barExpanded ? 30 : ((barWindow.isHovered || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? 64 : 30)
+    implicitHeight: barWindow.barExpanded ? 30 : ((barWindow.isHovered || barWindow.powermenuActive || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? 64 : 30)
     margins.top: barWindow.barExpanded ? 0 : 4
     color: "transparent"
     WlrLayershell.exclusiveZone: 30
@@ -89,15 +130,26 @@ PanelWindow {
         }
     }
 
+    Timer {
+        id: wrappedPowermenuDismissTimer
+
+        interval: 3000
+        repeat: false
+        onTriggered: {
+            barWindow.powermenuActive = false;
+        }
+    }
+
+
     Rectangle {
         id: barBg
 
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        height: barWindow.barExpanded ? 30 : ((barWindow.isHovered || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? 64 : 30)
+        height: barWindow.barExpanded ? 30 : ((barWindow.isHovered || barWindow.powermenuActive || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? 64 : 30)
         color: "#11111b"
-        width: barWindow.barExpanded ? parent.width : ((barWindow.isHovered || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? 360 : (barWindow.activeToastNotification !== null ? 220 : (barWindow.osdMode !== "" ? 170 : (barClock.width + 10))))
-        radius: barWindow.barExpanded ? 0 : ((barWindow.isHovered || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? 24 : 15)
+        width: barWindow.barExpanded ? parent.width : (barWindow.powermenuActive ? 260 : ((barWindow.isHovered || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? 360 : (barWindow.activeToastNotification !== null ? 220 : (barWindow.osdMode !== "" ? 170 : (barClock.width + 10)))))
+        radius: barWindow.barExpanded ? 0 : ((barWindow.isHovered || barWindow.powermenuActive || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? 24 : 15)
         clip: true
 
         MouseArea {
@@ -106,14 +158,21 @@ PanelWindow {
             anchors.fill: parent
             hoverEnabled: true
             onEntered: {
-                if (!barWindow.barExpanded)
+                if (barWindow.powermenuActive && !barWindow.barExpanded) {
+                    wrappedPowermenuDismissTimer.stop();
+                }
+                if (!barWindow.barExpanded && !barWindow.powermenuActive)
                     hoverTimer.start();
 
             }
             onExited: {
                 hoverTimer.stop();
                 barWindow.isHovered = false;
+                if (barWindow.powermenuActive && !barWindow.barExpanded) {
+                    wrappedPowermenuDismissTimer.restart();
+                }
             }
+
 
             Timer {
                 id: hoverTimer
@@ -121,7 +180,7 @@ PanelWindow {
                 interval: 750
                 repeat: false
                 onTriggered: {
-                    if (barMouseArea.containsMouse && !barWindow.barExpanded && barWindow.osdMode === "" && barWindow.activeToastNotification === null)
+                    if (barMouseArea.containsMouse && !barWindow.barExpanded && !barWindow.powermenuActive && barWindow.osdMode === "" && barWindow.activeToastNotification === null)
                         barWindow.isHovered = true;
 
                 }
@@ -137,7 +196,7 @@ PanelWindow {
                 states: [
                     State {
                         name: "visible"
-                        when: barWindow.barExpanded || (!barWindow.isHovered && barWindow.osdMode === "" && barWindow.activeToastNotification === null)
+                        when: barWindow.barExpanded || (!barWindow.isHovered && !barWindow.powermenuActive && barWindow.osdMode === "" && barWindow.activeToastNotification === null)
 
                         PropertyChanges {
                             target: barClock
@@ -147,7 +206,7 @@ PanelWindow {
                     },
                     State {
                         name: "hidden"
-                        when: !barWindow.barExpanded && (barWindow.isHovered || barWindow.osdMode !== "" || barWindow.activeToastNotification !== null)
+                        when: !barWindow.barExpanded && (barWindow.isHovered || barWindow.powermenuActive || barWindow.osdMode !== "" || barWindow.activeToastNotification !== null)
 
                         PropertyChanges {
                             target: barClock
@@ -198,6 +257,7 @@ PanelWindow {
                     hoverTimer.stop();
                     barWindow.barExpanded = !barWindow.barExpanded;
                     barWindow.isHovered = false;
+                    barWindow.powermenuActive = false;
                 }
             }
 
@@ -209,7 +269,7 @@ PanelWindow {
                 states: [
                     State {
                         name: "visible"
-                        when: !barWindow.barExpanded && !barWindow.isHovered && barWindow.osdMode !== ""
+                        when: !barWindow.barExpanded && !barWindow.isHovered && !barWindow.powermenuActive && barWindow.osdMode !== ""
 
                         PropertyChanges {
                             target: barOsdContent
@@ -219,7 +279,8 @@ PanelWindow {
                     },
                     State {
                         name: "hidden"
-                        when: barWindow.barExpanded || barWindow.isHovered || barWindow.osdMode === ""
+                        when: barWindow.barExpanded || barWindow.isHovered || barWindow.powermenuActive || barWindow.osdMode === ""
+
 
                         PropertyChanges {
                             target: barOsdContent
@@ -347,7 +408,7 @@ PanelWindow {
                 states: [
                     State {
                         name: "visible"
-                        when: barWindow.isHovered && !barWindow.barExpanded && barBg.width > 220 && (playerWidget.activePlayer === null || playerWidget.title === "")
+                        when: barWindow.isHovered && !barWindow.powermenuActive && !barWindow.barExpanded && barBg.width > 220 && (playerWidget.activePlayer === null || playerWidget.title === "")
 
                         PropertyChanges {
                             target: hoverContent
@@ -357,7 +418,8 @@ PanelWindow {
                     },
                     State {
                         name: "hidden"
-                        when: !barWindow.isHovered || barWindow.barExpanded || barBg.width <= 220 || (playerWidget.activePlayer !== null && playerWidget.title !== "")
+                        when: !barWindow.isHovered || barWindow.powermenuActive || barWindow.barExpanded || barBg.width <= 220 || (playerWidget.activePlayer !== null && playerWidget.title !== "")
+
 
                         PropertyChanges {
                             target: hoverContent
@@ -612,7 +674,7 @@ PanelWindow {
                 states: [
                     State {
                         name: "visible"
-                        when: barWindow.isHovered && !barWindow.barExpanded && barBg.width > 220 && playerWidget.activePlayer !== null && playerWidget.title !== ""
+                        when: barWindow.isHovered && !barWindow.powermenuActive && !barWindow.barExpanded && barBg.width > 220 && playerWidget.activePlayer !== null && playerWidget.title !== ""
 
                         PropertyChanges {
                             target: hoverPlayerContent
@@ -622,7 +684,8 @@ PanelWindow {
                     },
                     State {
                         name: "hidden"
-                        when: !barWindow.isHovered || barWindow.barExpanded || barBg.width <= 220 || playerWidget.activePlayer === null || playerWidget.title === ""
+                        when: !barWindow.isHovered || barWindow.powermenuActive || barWindow.barExpanded || barBg.width <= 220 || playerWidget.activePlayer === null || playerWidget.title === ""
+
 
                         PropertyChanges {
                             target: hoverPlayerContent
@@ -815,7 +878,7 @@ PanelWindow {
                 states: [
                     State {
                         name: "visible"
-                        when: !barWindow.barExpanded && barBg.width > 160 && barWindow.activeToastNotification !== null && !barWindow.isHovered
+                        when: !barWindow.barExpanded && barBg.width > 160 && barWindow.activeToastNotification !== null && !barWindow.isHovered && !barWindow.powermenuActive
 
                         PropertyChanges {
                             target: hoverNotifContent
@@ -825,7 +888,8 @@ PanelWindow {
                     },
                     State {
                         name: "hidden"
-                        when: barWindow.barExpanded || barBg.width <= 160 || barWindow.activeToastNotification === null || barWindow.isHovered
+                        when: barWindow.barExpanded || barBg.width <= 160 || barWindow.activeToastNotification === null || barWindow.isHovered || barWindow.powermenuActive
+
 
                         PropertyChanges {
                             target: hoverNotifContent
@@ -1005,6 +1069,168 @@ PanelWindow {
 
             }
 
+            // --- Hover State Powermenu Content ---
+            Item {
+                id: hoverPowermenuContent
+
+                anchors.fill: parent
+                visible: opacity > 0
+                states: [
+                    State {
+                        name: "visible"
+                        when: !barWindow.barExpanded && barWindow.powermenuActive && barBg.width > 220
+
+                        PropertyChanges {
+                            target: hoverPowermenuContent
+                            opacity: 1
+                        }
+                    },
+                    State {
+                        name: "hidden"
+                        when: barWindow.barExpanded || !barWindow.powermenuActive || barBg.width <= 220
+
+                        PropertyChanges {
+                            target: hoverPowermenuContent
+                            opacity: 0
+                        }
+                    }
+                ]
+                transitions: [
+                    Transition {
+                        from: "hidden"
+                        to: "visible"
+
+                        NumberAnimation {
+                            properties: "opacity"
+                            duration: 100
+                            easing.type: Easing.OutQuad
+                        }
+                    },
+                    Transition {
+                        from: "visible"
+                        to: "hidden"
+
+                        NumberAnimation {
+                            properties: "opacity"
+                            duration: 0
+                        }
+                    }
+                ]
+
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 24
+
+                    // Logout
+                    Rectangle {
+                        width: 40
+                        height: 40
+                        radius: 20
+                        color: barLogoutMouse.containsMouse ? Style.surface1 : "transparent"
+                        Behavior on color { ColorAnimation { duration: 150 } }
+
+                        Text {
+                            text: "logout"
+                            color: barLogoutMouse.containsMouse ? Style.red : Style.lavender
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                            font.family: "Material Symbols Rounded"
+                            font.pixelSize: 22
+                            anchors.centerIn: parent
+                        }
+
+                        MouseArea {
+                            id: barLogoutMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                barLogoutProc.running = true;
+                                barWindow.powermenuActive = false;
+                            }
+                            onEntered: wrappedPowermenuDismissTimer.stop()
+                            onExited: wrappedPowermenuDismissTimer.restart()
+                        }
+                    }
+
+                    // Reboot
+                    Rectangle {
+                        width: 40
+                        height: 40
+                        radius: 20
+                        color: barRebootMouse.containsMouse ? Style.surface1 : "transparent"
+                        Behavior on color { ColorAnimation { duration: 150 } }
+
+                        Text {
+                            text: "restart_alt"
+                            color: barRebootMouse.containsMouse ? Style.red : Style.lavender
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                            font.family: "Material Symbols Rounded"
+                            font.pixelSize: 22
+                            anchors.centerIn: parent
+                        }
+
+                        MouseArea {
+                            id: barRebootMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                barRebootProc.running = true;
+                                barWindow.powermenuActive = false;
+                            }
+                            onEntered: wrappedPowermenuDismissTimer.stop()
+                            onExited: wrappedPowermenuDismissTimer.restart()
+                        }
+                    }
+
+                    // Shutdown
+                    Rectangle {
+                        width: 40
+                        height: 40
+                        radius: 20
+                        color: barShutdownMouse.containsMouse ? Style.surface1 : "transparent"
+                        Behavior on color { ColorAnimation { duration: 150 } }
+
+                        Text {
+                            text: "power_settings_new"
+                            color: barShutdownMouse.containsMouse ? Style.red : Style.lavender
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                            font.family: "Material Symbols Rounded"
+                            font.pixelSize: 22
+                            anchors.centerIn: parent
+                        }
+
+                        MouseArea {
+                            id: barShutdownMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                barShutdownProc.running = true;
+                                barWindow.powermenuActive = false;
+                            }
+                            onEntered: wrappedPowermenuDismissTimer.stop()
+                            onExited: wrappedPowermenuDismissTimer.restart()
+                        }
+                    }
+                }
+
+                QsIo.Process {
+                    id: barLogoutProc
+                    command: ["sh", "-c", "hyprshutdown -t 'Loging Out... ' --post-cmd 'logout -P 0'"]
+                }
+
+                QsIo.Process {
+                    id: barRebootProc
+                    command: ["sh", "-c", "reboot"]
+                }
+
+                QsIo.Process {
+                    id: barShutdownProc
+                    command: ["sh", "-c", "hyprshutdown -t 'Shutting Down...' --post-cmd 'shutdown -P 0'"]
+                }
+            }
+
         }
 
         Behavior on width {
@@ -1024,17 +1250,19 @@ PanelWindow {
         }
 
         Behavior on height {
-            enabled: !barWindow.isHovered
+            enabled: !barWindow.isHovered && !barWindow.powermenuActive
 
             NumberAnimation {
-                duration: 350
-                easing.type: Easing.OutCubic
+                duration: 450
+                easing.type: Easing.OutBack
+                easing.overshoot: 0.6
             }
 
         }
 
         Behavior on radius {
-            enabled: !barWindow.isHovered
+            enabled: !barWindow.isHovered && !barWindow.powermenuActive
+
 
             SequentialAnimation {
                 PauseAnimation {
@@ -1042,8 +1270,9 @@ PanelWindow {
                 }
 
                 NumberAnimation {
-                    duration: barWindow.barExpanded ? 100 : 350
-                    easing.type: Easing.OutCubic
+                    duration: barWindow.barExpanded ? 100 : 450
+                    easing.type: Easing.OutBack
+                    easing.overshoot: 0.6
                 }
 
             }
@@ -1530,6 +1759,18 @@ PanelWindow {
 
         }
     }
+
+    Loader {
+        id: powermenuPopupLoader
+
+        active: false
+        source: "../components/popout/PowermenuPopup.qml"
+        onActiveChanged: {
+            if (active)
+                barWindow.closeAllPopupsExcept(powermenuPopupLoader);
+        }
+    }
+
 
     // --- Smoothly Collapsible Modules Container ---
     Item {
