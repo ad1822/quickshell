@@ -26,12 +26,18 @@ PanelWindow {
     onOsdModeChanged: {
         if (osdMode !== "" && !barExpanded) {
             isHovered = false;
+            activeToastNotification = null;
+            barNotifToastTimer.stop();
+            powermenuActive = false;
         }
     }
 
     onActiveToastNotificationChanged: {
         if (activeToastNotification !== null && !barExpanded) {
             isHovered = false;
+            osdMode = "";
+            barOsdTimer.stop();
+            powermenuActive = false;
         }
     }
 
@@ -39,6 +45,10 @@ PanelWindow {
         if (powermenuActive) {
             if (!barExpanded) {
                 isHovered = false;
+                activeToastNotification = null;
+                barNotifToastTimer.stop();
+                osdMode = "";
+                barOsdTimer.stop();
                 wrappedPowermenuDismissTimer.restart();
             }
         } else {
