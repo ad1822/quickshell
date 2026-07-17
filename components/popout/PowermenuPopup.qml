@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
-import Quickshell.Io
+import Quickshell.Io as QsIo
+import Quickshell.Wayland
 import "../../components"
 
 PopupWindow {
@@ -35,12 +36,14 @@ PopupWindow {
     }
 
     anchor.window: barWindow
-    anchor.rect.x: barWindow.width / 2 - implicitWidth / 2
+    anchor.rect.x: barWindow.width - implicitWidth - 10
     anchor.rect.y: barWindow.height
     implicitWidth: 200
     implicitHeight: 70
     color: "transparent"
     visible: true
+
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
     onVisibleChanged: {
         if (!visible)
@@ -73,6 +76,42 @@ PopupWindow {
         border.color: Style.surface1
         border.width: 1.5
         opacity: 1
+        focus: visible
+
+        property int activeIndex: 0
+
+        onVisibleChanged: {
+            if (visible) {
+                forceActiveFocus();
+                activeIndex = 0;
+            }
+        }
+
+        Keys.onPressed: (event) => {
+            if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
+                // If keyboard tab navigates, reset/stop the auto-close timer so it doesn't close on the user
+                closeTimer.stop();
+                if (event.key === Qt.Key_Backtab || (event.modifiers & Qt.ShiftModifier)) {
+                    activeIndex = (activeIndex - 1 + 3) % 3;
+                } else {
+                    activeIndex = (activeIndex + 1) % 3;
+                }
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
+                if (activeIndex === 0) {
+                    logoutProc.running = true;
+                } else if (activeIndex === 1) {
+                    rebootProc.running = true;
+                } else if (activeIndex === 2) {
+                    shutdownProc.running = true;
+                }
+                powermenuPopup.closePopup();
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Escape) {
+                powermenuPopup.closePopup();
+                event.accepted = true;
+            }
+        }
 
         Behavior on opacity {
             NumberAnimation { duration: 150 }
@@ -93,12 +132,12 @@ PopupWindow {
                 width: 40
                 height: 40
                 radius: 20
-                color: logoutMouse.containsMouse ? Style.surface1 : "transparent"
+                color: (logoutMouse.containsMouse || (popupContent.focus && popupContent.activeIndex === 0)) ? Style.surface1 : "transparent"
                 Behavior on color { ColorAnimation { duration: 150 } }
 
                 Text {
                     text: "logout"
-                    color: logoutMouse.containsMouse ? Style.red : Style.lavender
+                    color: (logoutMouse.containsMouse || (popupContent.focus && popupContent.activeIndex === 0)) ? Style.red : Style.lavender
                     Behavior on color { ColorAnimation { duration: 150 } }
                     font.family: "Material Symbols Rounded"
                     font.pixelSize: 22
@@ -122,12 +161,12 @@ PopupWindow {
                 width: 40
                 height: 40
                 radius: 20
-                color: rebootMouse.containsMouse ? Style.surface1 : "transparent"
+                color: (rebootMouse.containsMouse || (popupContent.focus && popupContent.activeIndex === 1)) ? Style.surface1 : "transparent"
                 Behavior on color { ColorAnimation { duration: 150 } }
 
                 Text {
                     text: "restart_alt"
-                    color: rebootMouse.containsMouse ? Style.red : Style.lavender
+                    color: (rebootMouse.containsMouse || (popupContent.focus && popupContent.activeIndex === 1)) ? Style.red : Style.lavender
                     Behavior on color { ColorAnimation { duration: 150 } }
                     font.family: "Material Symbols Rounded"
                     font.pixelSize: 22
@@ -151,12 +190,12 @@ PopupWindow {
                 width: 40
                 height: 40
                 radius: 20
-                color: shutdownMouse.containsMouse ? Style.surface1 : "transparent"
+                color: (shutdownMouse.containsMouse || (popupContent.focus && popupContent.activeIndex === 2)) ? Style.surface1 : "transparent"
                 Behavior on color { ColorAnimation { duration: 150 } }
 
                 Text {
                     text: "power_settings_new"
-                    color: shutdownMouse.containsMouse ? Style.red : Style.lavender
+                    color: (shutdownMouse.containsMouse || (popupContent.focus && popupContent.activeIndex === 2)) ? Style.red : Style.lavender
                     Behavior on color { ColorAnimation { duration: 150 } }
                     font.family: "Material Symbols Rounded"
                     font.pixelSize: 22
@@ -177,17 +216,17 @@ PopupWindow {
         }
     }
 
-    Process {
+    QsIo.Process {
         id: logoutProc
         command: ["sh", "-c", "hyprshutdown -t 'Loging Out... ' --post-cmd 'logout -P 0'"]
     }
 
-    Process {
+    QsIo.Process {
         id: rebootProc
         command: ["sh", "-c", "reboot"]
     }
 
-    Process {
+    QsIo.Process {
         id: shutdownProc
         command: ["sh", "-c", "hyprshutdown -t 'Shutting Down...' --post-cmd 'shutdown -P 0'"]
     }

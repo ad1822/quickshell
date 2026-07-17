@@ -109,6 +109,7 @@ PanelWindow {
     margins.top: barWindow.barExpanded ? 0 : 4
     color: "transparent"
     WlrLayershell.exclusiveZone: 30
+    WlrLayershell.keyboardFocus: powermenuActive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
     Timer {
         id: barNotifToastTimer
@@ -1075,6 +1076,41 @@ PanelWindow {
 
                 anchors.fill: parent
                 visible: opacity > 0
+                focus: visible
+
+                property int activeIndex: 0
+
+                onVisibleChanged: {
+                    if (visible) {
+                        forceActiveFocus();
+                        activeIndex = 0;
+                    }
+                }
+
+                Keys.onPressed: (event) => {
+                    if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
+                        if (event.key === Qt.Key_Backtab || (event.modifiers & Qt.ShiftModifier)) {
+                            activeIndex = (activeIndex - 1 + 3) % 3;
+                        } else {
+                            activeIndex = (activeIndex + 1) % 3;
+                        }
+                        event.accepted = true;
+                    } else if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
+                        if (activeIndex === 0) {
+                            barLogoutProc.running = true;
+                        } else if (activeIndex === 1) {
+                            barRebootProc.running = true;
+                        } else if (activeIndex === 2) {
+                            barShutdownProc.running = true;
+                        }
+                        barWindow.powermenuActive = false;
+                        event.accepted = true;
+                    } else if (event.key === Qt.Key_Escape) {
+                        barWindow.powermenuActive = false;
+                        event.accepted = true;
+                    }
+                }
+
                 states: [
                     State {
                         name: "visible"
@@ -1126,12 +1162,12 @@ PanelWindow {
                         width: 40
                         height: 40
                         radius: 20
-                        color: barLogoutMouse.containsMouse ? Style.surface1 : "transparent"
+                        color: (barLogoutMouse.containsMouse || (hoverPowermenuContent.focus && hoverPowermenuContent.activeIndex === 0)) ? Style.surface1 : "transparent"
                         Behavior on color { ColorAnimation { duration: 150 } }
 
                         Text {
                             text: "logout"
-                            color: barLogoutMouse.containsMouse ? Style.red : Style.lavender
+                            color: (barLogoutMouse.containsMouse || (hoverPowermenuContent.focus && hoverPowermenuContent.activeIndex === 0)) ? Style.red : Style.lavender
                             Behavior on color { ColorAnimation { duration: 150 } }
                             font.family: "Material Symbols Rounded"
                             font.pixelSize: 22
@@ -1157,12 +1193,12 @@ PanelWindow {
                         width: 40
                         height: 40
                         radius: 20
-                        color: barRebootMouse.containsMouse ? Style.surface1 : "transparent"
+                        color: (barRebootMouse.containsMouse || (hoverPowermenuContent.focus && hoverPowermenuContent.activeIndex === 1)) ? Style.surface1 : "transparent"
                         Behavior on color { ColorAnimation { duration: 150 } }
 
                         Text {
                             text: "restart_alt"
-                            color: barRebootMouse.containsMouse ? Style.red : Style.lavender
+                            color: (barRebootMouse.containsMouse || (hoverPowermenuContent.focus && hoverPowermenuContent.activeIndex === 1)) ? Style.red : Style.lavender
                             Behavior on color { ColorAnimation { duration: 150 } }
                             font.family: "Material Symbols Rounded"
                             font.pixelSize: 22
@@ -1188,12 +1224,12 @@ PanelWindow {
                         width: 40
                         height: 40
                         radius: 20
-                        color: barShutdownMouse.containsMouse ? Style.surface1 : "transparent"
+                        color: (barShutdownMouse.containsMouse || (hoverPowermenuContent.focus && hoverPowermenuContent.activeIndex === 2)) ? Style.surface1 : "transparent"
                         Behavior on color { ColorAnimation { duration: 150 } }
 
                         Text {
                             text: "power_settings_new"
-                            color: barShutdownMouse.containsMouse ? Style.red : Style.lavender
+                            color: (barShutdownMouse.containsMouse || (hoverPowermenuContent.focus && hoverPowermenuContent.activeIndex === 2)) ? Style.red : Style.lavender
                             Behavior on color { ColorAnimation { duration: 150 } }
                             font.family: "Material Symbols Rounded"
                             font.pixelSize: 22

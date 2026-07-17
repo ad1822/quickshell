@@ -329,9 +329,14 @@ print(json.dumps(apps))
                         }
 
                         Keys.onPressed: (event) => {
-                            if (event.key === Qt.Key_Tab) {
-                                spotlightWindow.onlyAppsMode = !spotlightWindow.onlyAppsMode;
-                                spotlightWindow.filter(text);
+                            if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
+                                if (spotlightWindow.filteredItems.length > 0) {
+                                    if (event.key === Qt.Key_Backtab || (event.modifiers & Qt.ShiftModifier)) {
+                                        spotlightWindow.selectedIndex = (spotlightWindow.selectedIndex - 1 + spotlightWindow.filteredItems.length) % spotlightWindow.filteredItems.length;
+                                    } else {
+                                        spotlightWindow.selectedIndex = (spotlightWindow.selectedIndex + 1) % spotlightWindow.filteredItems.length;
+                                    }
+                                }
                                 event.accepted = true;
                             } else if (event.key === Qt.Key_Backspace) {
                                 if (text.length === 0 && spotlightWindow.onlyAppsMode) {

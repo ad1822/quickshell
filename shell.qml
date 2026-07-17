@@ -35,6 +35,14 @@ ShellRoot {
         id: wallpaperWindow
     }
 
+    Clipboard {
+        id: clipboardWindow
+    }
+
+    PassManager {
+        id: passWindow
+    }
+
     Connections {
         target: barWindow.volumeWidget
 
@@ -154,6 +162,36 @@ ShellRoot {
         target: "powermenu"
         function toggle(): void {
             barWindow.togglePowermenu();
+        }
+    }
+
+    GlobalShortcut {
+        name: "clipboard"
+        description: "Toggle Clipboard"
+        onPressed: {
+            clipboardWindow.toggle();
+        }
+    }
+
+    IpcHandler {
+        target: "clipboard"
+        function toggle(): void {
+            clipboardWindow.toggle();
+        }
+    }
+
+    GlobalShortcut {
+        name: "passmanager"
+        description: "Toggle Password Manager"
+        onPressed: {
+            passWindow.toggle();
+        }
+    }
+
+    IpcHandler {
+        target: "passmanager"
+        function toggle(): void {
+            passWindow.toggle();
         }
     }
 }

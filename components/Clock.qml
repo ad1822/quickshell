@@ -14,11 +14,10 @@ Rectangle {
     radius: 0
 
     Row {
-        // 1. Calendar Icon (Only visible when wrapped and music NOT playing)
-
         id: clockRow
 
-        anchors.centerIn: parent
+        anchors.horizontalCenter: parent.horizontalCenter
+        height: parent.height
         spacing: 6
 
         // 1.5 Dynamic Music Visualizer (Only visible when wrapped and music IS playing)
@@ -166,6 +165,8 @@ Rectangle {
         // 2. Pulse Time (Hours & Minutes)
         Row {
             spacing: 1
+            height: parent.height
+            anchors.verticalCenter: parent.verticalCenter
 
             Text {
                 text: Qt.formatDateTime(clockRoot.currentTime, "HH")
@@ -173,6 +174,8 @@ Rectangle {
                 font.family: Style.fontFamily
                 font.pixelSize: Style.fontSize
                 font.weight: Font.Bold
+                height: parent.height
+                verticalAlignment: Text.AlignVCenter
             }
 
             // Pulsing Colon separator
@@ -183,6 +186,8 @@ Rectangle {
                 font.pixelSize: Style.fontSize
                 font.weight: Font.Bold
                 opacity: 1
+                height: parent.height
+                verticalAlignment: Text.AlignVCenter
 
                 NumberAnimation on opacity {
                     from: 0.3
@@ -200,6 +205,8 @@ Rectangle {
                 font.family: Style.fontFamily
                 font.pixelSize: Style.fontSize
                 font.weight: Font.Bold
+                height: parent.height
+                verticalAlignment: Text.AlignVCenter
             }
 
         }
@@ -211,6 +218,7 @@ Rectangle {
             font.family: Style.fontFamily
             font.pixelSize: Style.fontSize
             verticalAlignment: Text.AlignVCenter
+            height: parent.height
             opacity: clockRoot.barExpanded ? 1 : 0
             width: clockRoot.barExpanded ? 8 : 0
             clip: true
@@ -237,6 +245,7 @@ Rectangle {
             id: dateContainer
 
             height: parent.height
+            anchors.verticalCenter: parent.verticalCenter
             width: clockRoot.barExpanded ? dateText.implicitWidth : 0
             opacity: clockRoot.barExpanded ? 1 : 0
             clip: true
@@ -249,7 +258,8 @@ Rectangle {
                 font.family: Style.fontFamily
                 font.pixelSize: Style.fontSize
                 font.weight: Style.fontWeight
-                anchors.verticalCenter: parent.verticalCenter
+                height: parent.height
+                verticalAlignment: Text.AlignVCenter
             }
 
             Behavior on width {
