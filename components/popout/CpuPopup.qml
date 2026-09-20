@@ -83,7 +83,7 @@ PopupWindow {
     }
     anchor.window: barWindow
     // Align the popup's center to the CPU widget's center (globally mapped)
-    anchor.rect.x: modulesContainer.x + cpuWidget.x + (cpuWidget.width / 2) - 110
+    anchor.rect.x: barWindow.slotCenterX("cpu") - 110
     anchor.rect.y: barWindow.height
     implicitWidth: 220
     implicitHeight: 230

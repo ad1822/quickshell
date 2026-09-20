@@ -8,6 +8,9 @@ WallpaperButton 1.0 WallpaperButton.qml
 Player 1.0 Player.qml
 Volume 1.0 Volume.qml
 Brightness 1.0 Brightness.qml
-WifiIcon 1.0 WifiIcon.qml
 Battery 1.0 Battery.qml
 VolumeOsd 1.0 VolumeOsd.qml
+BarSlot 1.0 BarSlot.qml
+BarSection 1.0 BarSection.qml
+BarDragController 1.0 BarDragController.qml
+OmarchyBarApi 1.0 OmarchyBarApi.qml

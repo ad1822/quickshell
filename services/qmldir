@@ -1,0 +1,2 @@
+singleton BarConfig 1.0 BarConfig.qml
+singleton BarWidgetRegistry 1.0 BarWidgetRegistry.qml

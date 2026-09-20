@@ -124,7 +124,7 @@ PopupWindow {
                     id: bgArtImage
 
                     anchors.fill: parent
-                    source: (playerWidget.localArtUrl !== "") ? playerWidget.localArtUrl : ""
+                    source: barWindow.playerWidget?.localArtUrl ?? ""
                     fillMode: Image.PreserveAspectCrop
                     visible: false
                     asynchronous: true
@@ -136,14 +136,14 @@ PopupWindow {
                     blurEnabled: true
                     blur: 0.6
                     opacity: 0.8
-                    visible: playerWidget.localArtUrl !== ""
+                    visible: (barWindow.playerWidget?.localArtUrl ?? "") !== ""
                 }
 
                 // Dark overlay to ensure text contrast
                 Rectangle {
                     anchors.fill: parent
                     color: "#aa0c0c0f"
-                    visible: playerWidget.localArtUrl !== ""
+                    visible: (barWindow.playerWidget?.localArtUrl ?? "") !== ""
                 }
 
                 layer.effect: OpacityMask {
@@ -211,7 +211,7 @@ PopupWindow {
                             }
 
                             Text {
-                                text: playerWidget.playerName !== "" ? playerWidget.playerName : "Media Player"
+                                text: (barWindow.playerWidget?.playerName ?? "") !== "" ? barWindow.playerWidget.playerName : "Media Player"
                                 color: Style.subtext1
                                 font.family: Style.fontFamily
                                 font.pixelSize: 9
@@ -224,7 +224,7 @@ PopupWindow {
                         }
 
                         Text {
-                            text: playerWidget.title
+                            text: barWindow.playerWidget?.title ?? ""
                             color: Style.text
                             font.family: Style.fontFamily
                             font.pixelSize: 14
@@ -234,13 +234,13 @@ PopupWindow {
                         }
 
                         Text {
-                            text: playerWidget.artist
+                            text: barWindow.playerWidget?.artist ?? ""
                             color: Style.subtext0
                             font.family: Style.fontFamily
                             font.pixelSize: 11
                             width: parent.width
                             elide: Text.ElideRight
-                            visible: playerWidget.artist !== ""
+                            visible: (barWindow.playerWidget?.artist ?? "") !== ""
                         }
 
                     }
@@ -262,7 +262,7 @@ PopupWindow {
                             anchors.centerIn: parent
 
                             Text {
-                                text: playerWidget.isPlaying ? "pause" : "play_arrow"
+                                text: barWindow.playerWidget?.isPlaying ? "pause" : "play_arrow"
                                 color: "#11111b"
                                 font.family: "Material Symbols Rounded"
                                 font.pixelSize: 18
@@ -275,7 +275,7 @@ PopupWindow {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: playerWidget.togglePlay()
+                                onClicked: barWindow.playerWidget?.togglePlay()
                             }
 
                             Behavior on scale {
@@ -335,7 +335,7 @@ PopupWindow {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: playerWidget.prevTrack()
+                            onClicked: barWindow.playerWidget?.prevTrack()
                         }
 
                     }
@@ -361,7 +361,7 @@ PopupWindow {
                                 height: parent.height
                                 radius: 2
                                 color: Style.mauve
-                                width: Math.min(parent.width * (playerWidget.length > 0 ? (playerWidget.position / playerWidget.length) : 0), parent.width)
+                                width: Math.min(parent.width * ((barWindow.playerWidget?.length ?? 0) > 0 ? (barWindow.playerWidget.position / barWindow.playerWidget.length) : 0), parent.width)
                             }
 
                         }
@@ -373,9 +373,9 @@ PopupWindow {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: (mouse) => {
-                                if (playerWidget.length > 0) {
+                                if ((barWindow.playerWidget?.length ?? 0) > 0) {
                                     var clickPct = mouse.x / width;
-                                    var targetSecs = Math.round(clickPct * playerWidget.length);
+                                    var targetSecs = Math.round(clickPct * barWindow.playerWidget.length);
                                     Quickshell.execDetached(["playerctl", "position", targetSecs.toString()]);
                                 }
                             }
@@ -420,7 +420,7 @@ PopupWindow {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: playerWidget.nextTrack()
+                            onClicked: barWindow.playerWidget?.nextTrack()
                         }
 
                     }

@@ -91,7 +91,7 @@ PopupWindow {
 
     anchor.window: barWindow
     // Align the popup's center to the Memory widget's center (globally mapped)
-    anchor.rect.x: modulesContainer.x + memWidget.x + (memWidget.width / 2) - 110
+    anchor.rect.x: barWindow.slotCenterX("memory") - 110
     anchor.rect.y: barWindow.height
     implicitWidth: 220
     implicitHeight: 220

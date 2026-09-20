@@ -1,4 +1,5 @@
 import "../components"
+import "../services"
 import QtQuick
 import QtQuick.Shapes
 import Quickshell
@@ -16,8 +17,23 @@ PanelWindow {
     property bool powermenuActive: false
     property var activeToastNotification: null
     readonly property bool toastHasBody: activeToastNotification !== null && activeToastNotification.body && activeToastNotification.body !== ""
-    property alias volumeWidget: barVolumeWidget
-    property alias brightnessWidget: barBrightnessWidget
+    // Widgets live in BarSection repeaters now, so they cannot be reached by
+    // id. They are resolved by layout id instead, and are null whenever the
+    // user has dragged one off the bar entirely.
+    // Audio and backlight are handled by the imported Omarchy panels on the
+    // bar, but the OSDs and the collapsed pill still need the values. These
+    // two keep polling with no icon of their own.
+    readonly property var volumeWidget: volumeSource
+    readonly property var brightnessWidget: brightnessSource
+    readonly property var playerWidget: barDrag.itemFor("player")
+    readonly property var cpuWidget: barDrag.itemFor("cpu")
+    readonly property var memWidget: barDrag.itemFor("memory")
+    readonly property var netWidget: barDrag.itemFor("network")
+    readonly property bool hasMedia: playerWidget !== null && playerWidget.activePlayer !== null && playerWidget.title !== ""
+
+    // Drag-to-rearrange. Off by default so widgets keep their normal clicks;
+    // toggled from Hyprland via the "bar" IPC target.
+    property bool editMode: false
     property string osdMode: "" // "", "volume", "brightness"
     property int osdVolume: 0
     property bool osdMuted: false
@@ -77,7 +93,7 @@ PanelWindow {
         if (exceptLoader !== powermenuPopupLoader) {
             powermenuActive = false;
         }
-        var loaders = [wifiPopupLoader, playerPopupLoader, qsPopupLoader, popupLoader, memPopupLoader, netPopupLoader, powermenuPopupLoader];
+        var loaders = [playerPopupLoader, popupLoader, memPopupLoader, netPopupLoader, powermenuPopupLoader];
         for (var i = 0; i < loaders.length; i++) {
             var loader = loaders[i];
             if (loader && loader !== exceptLoader && loader.active)
@@ -94,13 +110,15 @@ PanelWindow {
                 } else {
                     powermenuPopupLoader.active = false;
                 }
+                powermenuActive = false;
             } else {
                 powermenuPopupLoader.active = true;
+                powermenuActive = true;
             }
         } else {
             powermenuActive = !powermenuActive;
             if (powermenuActive) {
-                var loaders = [wifiPopupLoader, playerPopupLoader, qsPopupLoader, popupLoader, memPopupLoader, netPopupLoader, powermenuPopupLoader];
+                var loaders = [playerPopupLoader, popupLoader, memPopupLoader, netPopupLoader, powermenuPopupLoader];
                 for (var i = 0; i < loaders.length; i++) {
                     var loader = loaders[i];
                     if (loader && loader.active)
@@ -110,6 +128,135 @@ PanelWindow {
         }
     }
 
+
+    // Horizontal centre of a widget, in this window's coordinates, for the
+    // popups that anchor under it. Walking the parent chain reads a real x
+    // off every ancestor, so the binding re-runs when a drag moves the widget
+    // or resizes anything before it.
+    function slotCenterX(id) {
+        var slot = barDrag.slotFor(id);
+        if (!slot)
+            return barWindow.width / 2;
+
+        var x = slot.x + slot.width / 2;
+        var node = slot.parent;
+        while (node && node !== barWindow.contentItem) {
+            x += node.x;
+            node = node.parent;
+        }
+        return x;
+    }
+
+    // Hover routing for the section widgets. Bar.qml used to wire each popup
+    // timer to a widget it declared by id; with widgets coming from a layout
+    // file the wiring has to key off the layout id instead.
+    function routeWidgetHover(id, isHovered) {
+        switch (id) {
+        case "cpu":
+            if (isHovered) {
+                closeTimer.stop();
+                openTimer.start();
+            } else {
+                openTimer.stop();
+                closeTimer.start();
+            }
+            break;
+        case "memory":
+            if (isHovered) {
+                memCloseTimer.stop();
+                memOpenTimer.start();
+            } else {
+                memOpenTimer.stop();
+                memCloseTimer.start();
+            }
+            break;
+        case "network":
+            if (isHovered) {
+                netCloseTimer.stop();
+                netOpenTimer.start();
+            } else {
+                netOpenTimer.stop();
+                netCloseTimer.start();
+            }
+            break;
+        case "player":
+            if (isHovered && barWindow.playerWidget && barWindow.playerWidget.activePlayer !== null) {
+                playerCloseTimer.stop();
+                playerOpenTimer.start();
+            } else {
+                playerOpenTimer.stop();
+                playerCloseTimer.start();
+            }
+            break;
+        }
+    }
+
+    function toggleEditMode(force) {
+        barWindow.editMode = force === undefined ? !barWindow.editMode : !!force;
+        // Rearranging is only meaningful on the full-width bar, where the
+        // sections are actually on screen.
+        if (barWindow.editMode)
+            barWindow.barExpanded = true;
+    }
+
+    // Headless audio/backlight sources. They carry no icon — the Omarchy
+    // audio and monitor panels own that on the bar now — but the OSDs in
+    // shell.qml and the collapsed pill still bind to their values, and their
+    // polling timers run regardless of visibility.
+    Volume {
+        id: volumeSource
+
+        visible: false
+    }
+
+    Brightness {
+        id: brightnessSource
+
+        visible: false
+    }
+
+    // Host object for the Omarchy panels imported under panels/.
+    OmarchyBarApi {
+        id: barApi
+
+        window: barWindow.contentItem
+        barSize: 30
+        position: "top"
+    }
+
+    BarDragController {
+        id: barDrag
+
+        editMode: barWindow.editMode
+        vertical: false
+        barApi: barApi
+    }
+
+    // The media widget dims itself unless something is playing; keeping its
+    // popup open has to override that, and it can no longer be set as a
+    // property on a widget the bar does not declare.
+    Binding {
+        target: barWindow.playerWidget
+        property: "forceVisible"
+        value: playerPopupLoader.active
+        when: barWindow.playerWidget !== null
+    }
+
+    QsIo.IpcHandler {
+        target: "bar"
+
+        function editMode(): void {
+            barWindow.toggleEditMode();
+        }
+
+        function editModeOff(): void {
+            barWindow.toggleEditMode(false);
+        }
+
+        function resetLayout(): void {
+            BarConfig.resetLayout();
+        }
+    }
 
 
     anchors.top: true
@@ -203,7 +350,7 @@ PanelWindow {
                 anchors.centerIn: parent
                 height: parent.height
                 barExpanded: barWindow.barExpanded
-                isMusicPlaying: playerWidget.isPlaying
+                isMusicPlaying: barWindow.playerWidget ? barWindow.playerWidget.isPlaying : false
                 states: [
                     State {
                         name: "visible"
@@ -341,7 +488,7 @@ PanelWindow {
                                 if (barWindow.osdMuted || barWindow.osdVolume <= 0)
                                     return "volume_off";
 
-                                if (barVolumeWidget.isHeadphones)
+                                if (barWindow.volumeWidget && barWindow.volumeWidget.isHeadphones)
                                     return "headphones";
 
                                 if (barWindow.osdVolume < 33)
@@ -419,7 +566,7 @@ PanelWindow {
                 states: [
                     State {
                         name: "visible"
-                        when: barWindow.isHovered && !barWindow.powermenuActive && !barWindow.barExpanded && barBg.width > 220 && (playerWidget.activePlayer === null || playerWidget.title === "")
+                        when: barWindow.isHovered && !barWindow.powermenuActive && !barWindow.barExpanded && barBg.width > 220 && !barWindow.hasMedia
 
                         PropertyChanges {
                             target: hoverContent
@@ -429,7 +576,7 @@ PanelWindow {
                     },
                     State {
                         name: "hidden"
-                        when: !barWindow.isHovered || barWindow.powermenuActive || barWindow.barExpanded || barBg.width <= 220 || (playerWidget.activePlayer !== null && playerWidget.title !== "")
+                        when: !barWindow.isHovered || barWindow.powermenuActive || barWindow.barExpanded || barBg.width <= 220 || barWindow.hasMedia
 
 
                         PropertyChanges {
@@ -685,7 +832,7 @@ PanelWindow {
                 states: [
                     State {
                         name: "visible"
-                        when: barWindow.isHovered && !barWindow.powermenuActive && !barWindow.barExpanded && barBg.width > 220 && playerWidget.activePlayer !== null && playerWidget.title !== ""
+                        when: barWindow.isHovered && !barWindow.powermenuActive && !barWindow.barExpanded && barBg.width > 220 && barWindow.hasMedia
 
                         PropertyChanges {
                             target: hoverPlayerContent
@@ -695,7 +842,7 @@ PanelWindow {
                     },
                     State {
                         name: "hidden"
-                        when: !barWindow.isHovered || barWindow.powermenuActive || barWindow.barExpanded || barBg.width <= 220 || playerWidget.activePlayer === null || playerWidget.title === ""
+                        when: !barWindow.isHovered || barWindow.powermenuActive || barWindow.barExpanded || barBg.width <= 220 || !barWindow.hasMedia
 
 
                         PropertyChanges {
@@ -743,7 +890,7 @@ PanelWindow {
 
                     Image {
                         anchors.fill: parent
-                        source: (playerWidget.localArtUrl !== "") ? playerWidget.localArtUrl : ""
+                        source: (barWindow.playerWidget && barWindow.playerWidget.localArtUrl !== "") ? barWindow.playerWidget.localArtUrl : ""
                         fillMode: Image.PreserveAspectCrop
                         visible: source !== "" && status === Image.Ready
                         asynchronous: true
@@ -755,7 +902,7 @@ PanelWindow {
                         font.family: "Material Symbols Rounded"
                         font.pixelSize: 18
                         anchors.centerIn: parent
-                        visible: playerWidget.localArtUrl === ""
+                        visible: !barWindow.playerWidget || barWindow.playerWidget.localArtUrl === ""
                     }
 
                 }
@@ -776,7 +923,7 @@ PanelWindow {
                         anchors.verticalCenter: parent.verticalCenter
                         cursorShape: Qt.PointingHandCursor
                         hoverEnabled: true
-                        onClicked: playerWidget.prevTrack()
+                        onClicked: if (barWindow.playerWidget) barWindow.playerWidget.prevTrack()
 
                         Text {
                             text: "skip_previous"
@@ -800,7 +947,7 @@ PanelWindow {
                         scale: hoverPlayMouse.containsMouse ? 1.08 : 1
 
                         Text {
-                            text: playerWidget.isPlaying ? "pause" : "play_arrow"
+                            text: barWindow.playerWidget && barWindow.playerWidget.isPlaying ? "pause" : "play_arrow"
                             color: "#11111b"
                             font.family: "Material Symbols Rounded"
                             font.pixelSize: 16
@@ -813,7 +960,7 @@ PanelWindow {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: playerWidget.togglePlay()
+                            onClicked: if (barWindow.playerWidget) barWindow.playerWidget.togglePlay()
                         }
 
                         Behavior on scale {
@@ -833,7 +980,7 @@ PanelWindow {
                         anchors.verticalCenter: parent.verticalCenter
                         cursorShape: Qt.PointingHandCursor
                         hoverEnabled: true
-                        onClicked: playerWidget.nextTrack()
+                        onClicked: if (barWindow.playerWidget) barWindow.playerWidget.nextTrack()
 
                         Text {
                             text: "skip_next"
@@ -857,7 +1004,7 @@ PanelWindow {
                     spacing: 2
 
                     Text {
-                        text: playerWidget.title
+                        text: barWindow.playerWidget ? barWindow.playerWidget.title : ""
                         color: Style.text
                         font.family: Style.fontFamily
                         font.pixelSize: 12
@@ -867,13 +1014,13 @@ PanelWindow {
                     }
 
                     Text {
-                        text: playerWidget.artist
+                        text: barWindow.playerWidget ? barWindow.playerWidget.artist : ""
                         color: Style.subtext0
                         font.family: Style.fontFamily
                         font.pixelSize: 10
                         width: parent.width
                         elide: Text.ElideRight
-                        visible: playerWidget.artist !== ""
+                        visible: barWindow.playerWidget !== null && barWindow.playerWidget.artist !== ""
                     }
 
                 }
@@ -1335,106 +1482,17 @@ PanelWindow {
         anchors.verticalCenter: parent.verticalCenter
         height: parent.height
         spacing: 6
-        layoutDirection: Qt.RightToLeft
         opacity: barWindow.barExpanded ? 1 : 0
 
-        Battery {
-            id: barBatteryWidget
-
-            height: parent.height
-        }
-
-        WifiIcon {
-            id: wifiIconWidget
-
+        // Widget order comes from bar.json's right section. The separators
+        // that used to sit between these by hand are layout entries now, so
+        // they move with whatever they were separating.
+        BarSection {
+            region: "right"
+            controller: barDrag
             anchors.verticalCenter: parent.verticalCenter
-            onHovered: (isHovered) => {
-                if (isHovered) {
-                    wifiCloseTimer.stop();
-                    wifiOpenTimer.start();
-                } else {
-                    wifiOpenTimer.stop();
-                    wifiCloseTimer.start();
-                }
-            }
-        }
 
-        Rectangle {
-            width: 1
-            height: 12
-            color: Style.surface1
-            anchors.verticalCenter: parent.verticalCenter
-        }
-
-        Volume {
-            id: barVolumeWidget
-
-            anchors.verticalCenter: parent.verticalCenter
-            onHovered: (isHovered) => {
-                if (isHovered) {
-                    qsCloseTimer.stop();
-                    qsOpenTimer.start();
-                } else {
-                    qsOpenTimer.stop();
-                    qsCloseTimer.start();
-                }
-            }
-        }
-
-        Rectangle {
-            width: 1
-            height: 12
-            color: Style.surface1
-            anchors.verticalCenter: parent.verticalCenter
-        }
-
-        Brightness {
-            id: barBrightnessWidget
-
-            anchors.verticalCenter: parent.verticalCenter
-            onHovered: (isHovered) => {
-                if (isHovered) {
-                    qsCloseTimer.stop();
-                    qsOpenTimer.start();
-                } else {
-                    qsOpenTimer.stop();
-                    qsCloseTimer.start();
-                }
-            }
-        }
-
-        Rectangle {
-            width: 1
-            height: 12
-            color: Style.surface1
-            anchors.verticalCenter: parent.verticalCenter
-        }
-
-        WallpaperButton {
-            anchors.verticalCenter: parent.verticalCenter
-        }
-
-        Rectangle {
-            width: 1
-            height: 12
-            color: Style.surface1
-            anchors.verticalCenter: parent.verticalCenter
-        }
-
-        Player {
-            id: playerWidget
-
-            forceVisible: playerPopupLoader.active
-            anchors.verticalCenter: parent.verticalCenter
-            onHovered: (isHovered) => {
-                if (isHovered && playerWidget.activePlayer !== null) {
-                    playerCloseTimer.stop();
-                    playerOpenTimer.start();
-                } else {
-                    playerOpenTimer.stop();
-                    playerCloseTimer.start();
-                }
-            }
+            onWidgetHovered: (id, isHovered) => barWindow.routeWidgetHover(id, isHovered)
         }
 
         Behavior on anchors.rightMargin {
@@ -1686,46 +1744,6 @@ PanelWindow {
         }
     }
 
-    // --- Wifi Popup Timers & Loader ---
-    Timer {
-        id: wifiOpenTimer
-
-        interval: 300
-        repeat: false
-        onTriggered: {
-            wifiCloseTimer.stop();
-            if (wifiPopupLoader.active && wifiPopupLoader.item)
-                wifiPopupLoader.item.cancelClose();
-            else
-                wifiPopupLoader.active = true;
-        }
-    }
-
-    Timer {
-        id: wifiCloseTimer
-
-        interval: 200
-        repeat: false
-        onTriggered: {
-            if (wifiPopupLoader.item)
-                wifiPopupLoader.item.closePopup();
-            else
-                wifiPopupLoader.active = false;
-        }
-    }
-
-    Loader {
-        id: wifiPopupLoader
-
-        active: false
-        source: "../components/popout/WifiPopup.qml"
-        onActiveChanged: {
-            if (active)
-                barWindow.closeAllPopupsExcept(wifiPopupLoader);
-
-        }
-    }
-
     // --- Player Popup Timers & Loader ---
     Timer {
         id: playerOpenTimer
@@ -1766,58 +1784,6 @@ PanelWindow {
         }
     }
 
-    // --- Quick Settings (Volume/Brightness) Popup Timers & Loader ---
-    Timer {
-        id: qsOpenTimer
-
-        interval: 300
-        repeat: false
-        onTriggered: {
-            qsCloseTimer.stop();
-            if (qsPopupLoader.active && qsPopupLoader.item)
-                qsPopupLoader.item.cancelClose();
-            else
-                qsPopupLoader.active = true;
-        }
-    }
-
-    Timer {
-        id: qsCloseTimer
-
-        interval: 1500
-        repeat: false
-        onTriggered: {
-            if (qsPopupLoader.item)
-                qsPopupLoader.item.closePopup();
-            else
-                qsPopupLoader.active = false;
-        }
-    }
-
-    Loader {
-        id: qsPopupLoader
-
-        active: false
-        source: "../components/popout/QsPopup.qml"
-        onActiveChanged: {
-            if (active)
-                barWindow.closeAllPopupsExcept(qsPopupLoader);
-
-        }
-    }
-
-    Loader {
-        id: powermenuPopupLoader
-
-        active: false
-        source: "../components/popout/PowermenuPopup.qml"
-        onActiveChanged: {
-            if (active)
-                barWindow.closeAllPopupsExcept(powermenuPopupLoader);
-        }
-    }
-
-
     // --- Smoothly Collapsible Modules Container ---
     Item {
         id: modulesContainer
@@ -1829,68 +1795,20 @@ PanelWindow {
         height: parent.height
         clip: true
         anchors.leftMargin: marginVal
-        width: barWindow.modulesExpanded ? (netWidget.x + netWidget.width) : 0
+        width: barWindow.modulesExpanded ? leftSection.width : 0
         opacity: (barWindow.barExpanded && barWindow.modulesExpanded) ? 1 : 0
 
-        Process {
-            id: cpuWidget
+        // Widget order comes from bar.json's left section.
+        BarSection {
+            id: leftSection
 
+            region: "left"
+            controller: barDrag
+            spacing: 2
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            onHovered: (isHovered) => {
-                if (isHovered) {
-                    closeTimer.stop();
-                    openTimer.start();
-                } else {
-                    openTimer.stop();
-                    closeTimer.start();
-                }
-            }
-        }
 
-        Memory {
-            id: memWidget
-
-            anchors.left: cpuWidget.right
-            anchors.leftMargin: 2
-            anchors.verticalCenter: parent.verticalCenter
-            onHovered: (isHovered) => {
-                if (isHovered) {
-                    memCloseTimer.stop();
-                    memOpenTimer.start();
-                } else {
-                    memOpenTimer.stop();
-                    memCloseTimer.start();
-                }
-            }
-        }
-
-        Rectangle {
-            id: memNetSeparator
-
-            width: 1
-            height: 12
-            color: Style.surface1
-            anchors.left: memWidget.right
-            anchors.leftMargin: 8
-            anchors.verticalCenter: parent.verticalCenter
-        }
-
-        Network {
-            id: netWidget
-
-            anchors.left: memNetSeparator.right
-            anchors.leftMargin: 0
-            anchors.verticalCenter: parent.verticalCenter
-            onHovered: (isHovered) => {
-                if (isHovered) {
-                    netCloseTimer.stop();
-                    netOpenTimer.start();
-                } else {
-                    netOpenTimer.stop();
-                    netCloseTimer.start();
-                }
-            }
+            onWidgetHovered: (id, isHovered) => barWindow.routeWidgetHover(id, isHovered)
         }
 
         Behavior on marginVal {

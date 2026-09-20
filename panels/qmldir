@@ -1,0 +1,7 @@
+NetworkPanel 1.0 network/Panel.qml
+MonitorPanel 1.0 monitor/Panel.qml
+AudioPanel 1.0 audio/Panel.qml
+PowerPanel 1.0 power/Panel.qml
+BluetoothPanel 1.0 bluetooth/Panel.qml
+ClockPanel 1.0 clock/BarWidget.qml
+WeatherPanel 1.0 weather/BarWidget.qml
