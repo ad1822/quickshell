@@ -238,6 +238,9 @@ PanelWindow {
     } else {
       focusPrimeTimer.stop()
       focusPrimed = false
+      // Fold back to the pill, and make the next open re-wait for a settled
+      // content size rather than reusing this one's.
+      card.unfolded = false
     }
     if (!bar) return
     if (open) {
@@ -478,13 +481,84 @@ PanelWindow {
     // expands, a list settles shorter than it first laid out. With Behaviors
     // on the sizes themselves, every one of those re-animated the card and
     // the bottom edge sailed past where it belonged before coming back.
-    // Interpolating instead means content changes reach the card immediately,
-    // at whatever progress the open animation is at.
-    property real growth: shown ? 1 : 0
+    //
+    // `unfolded` rather than `shown` drives it: see unfoldGate below.
+    property real growth: unfolded || root.popoutSwitching ? 1 : 0
+
+    // Set once the content this popup is about to reveal has stopped
+    // resizing, which is what actually starts the unfold.
+    property bool unfolded: false
+
+    // The size the unfold grows into. Bound live, but behind a short glide, so
+    // a panel that changes size while it is up — a scan filling in, a section
+    // expanding — slides the card to its new size instead of snapping to it,
+    // and a change that lands mid-unfold moves the target smoothly rather than
+    // yanking it.
+    property real targetWidth: root.contentWidth
+    property real targetHeight: root.contentHeight
+
     readonly property real collapsedWidth: root.bar && root.bar.popupCollapsedWidth !== undefined
       ? root.bar.popupCollapsedWidth : root.contentWidth
     readonly property real collapsedHeight: root.bar && root.bar.popupCollapsedHeight !== undefined
       ? root.bar.popupCollapsedHeight : root.contentHeight
+
+    Behavior on targetWidth {
+      enabled: !root.popoutSwitching && !root.popoutSwitchClosing
+      NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+    }
+
+    Behavior on targetHeight {
+      enabled: !root.popoutSwitching && !root.popoutSwitchClosing
+      NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+    }
+
+    // Hold the card at its collapsed pill — attached to the bar, already
+    // fading in — until the panel has reported the same content size on two
+    // consecutive frames, then unfold once, into a size that is standing
+    // still.
+    //
+    // Panels measure themselves as they open: power waits on a upower read and
+    // a profile list, network on a scan, bluetooth on its device list. Growing
+    // into that moving target is what made the card sail ~36px past its
+    // resting height and ease back over the next quarter second, which reads
+    // as the popup detaching from the bar and settling rather than unfolding
+    // out of it.
+    //
+    // `popupUnfoldGrace` caps the wait so a panel whose content never settles
+    // (a clock relaying every second, a query that never lands) still opens.
+    Timer {
+      id: unfoldGate
+
+      readonly property int grace: root.bar && root.bar.popupUnfoldGrace !== undefined
+        ? root.bar.popupUnfoldGrace : 350
+      property real lastWidth: -1
+      property real lastHeight: -1
+      property int stableTicks: 0
+      property int waited: 0
+
+      interval: 16
+      repeat: true
+      running: root.open && !card.unfolded
+
+      onRunningChanged: if (running) {
+        lastWidth = -1
+        lastHeight = -1
+        stableTicks = 0
+        waited = 0
+      }
+
+      onTriggered: {
+        waited += interval
+        if (root.contentWidth === lastWidth && root.contentHeight === lastHeight) {
+          stableTicks++
+        } else {
+          stableTicks = 0
+          lastWidth = root.contentWidth
+          lastHeight = root.contentHeight
+        }
+        if (stableTicks >= 2 || waited >= grace) card.unfolded = true
+      }
+    }
 
     // Grows from the bar edge: centred on the anchor across the bar, and
     // pinned to the bar's own edge along it, so it never drifts sideways or
@@ -492,8 +566,8 @@ PanelWindow {
     x: root.cardOrigin.x + (root.barPos === "left" || root.barPos === "right"
       ? 0 : (root.contentWidth - width) / 2)
     y: root.cardOrigin.y + (root.barPos === "bottom" ? root.contentHeight - height : 0)
-    width: collapsedWidth + (root.contentWidth - collapsedWidth) * growth
-    height: collapsedHeight + (root.contentHeight - collapsedHeight) * growth
+    width: collapsedWidth + (targetWidth - collapsedWidth) * growth
+    height: collapsedHeight + (targetHeight - collapsedHeight) * growth
     // Content is laid out at full size, so it has to be clipped while the card
     // is still smaller than it.
     clip: true

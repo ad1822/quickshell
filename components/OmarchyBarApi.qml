@@ -141,6 +141,14 @@ QtObject {
     property int popupFadeDuration: Style.durationExpressiveSlowSpatial
     property var popupFadeCurve: Style.expressiveSlowEffectsCurve
 
+    // How long a popup may sit as a pill on the bar's edge waiting for its
+    // content to stop resizing before it unfolds anyway. Panels measure
+    // themselves as they open, and unfolding into a size that is still moving
+    // makes the card overshoot and ease back — the popup reads as detaching
+    // from the bar instead of growing out of it. Most panels settle within a
+    // frame or two; this only caps the wait for one that never does.
+    property int popupUnfoldGrace: 350
+
     function applyChrome() {
         if (Omarchy.Style.cornerRadius !== api.popupRadius)
             Omarchy.Style.cornerRadius = api.popupRadius;
