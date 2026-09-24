@@ -117,6 +117,11 @@ QtObject {
     // as part of the bar. Set false to get plain rounded cards back.
     property bool popupFuseWithBar: true
 
+    // No outline around a popup. The kit rings every card in 2px of accent,
+    // which draws a seam around something that is supposed to look like the
+    // bar unfolding. Set true to get the ring back.
+    property bool popupBorder: false
+
     // Open animation. Omarchy only cross-fades its popups; the popups in
     // components/popout spring open from a small pill under the bar, so these
     // hand KeyboardPanel the same collapsed size and the same curves this

@@ -511,17 +511,33 @@ Panel {
         id: scrollArea
         anchors.fill: parent
         clip: true
+
+        // The popup sizes itself from panelColumn.implicitHeight, so nothing
+        // in here may size itself from the popup's height in return. Going
+        // through `availableWidth` (which narrows when the scrollbar appears)
+        // and `height` (which is the measurement's own result) closed exactly
+        // that loop: the column re-wrapped, reported a different height, and
+        // the popup chased it for several frames after opening — the settle
+        // that made the card look like it was detaching from the bar.
+        //
+        // Both are answered from the fixed cap instead. The gutter is always
+        // reserved, so the column's width is a constant and its height is
+        // measured once.
+        readonly property real scrollGutter: Style.space(12)
+        readonly property real maxContentHeight: Style.space(560) - panel.verticalContentInset
+        readonly property bool scrollable: panelColumn.implicitHeight > maxContentHeight
+
         ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-        ScrollBar.vertical.policy: panelColumn.implicitHeight > height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+        ScrollBar.vertical.policy: scrollArea.scrollable ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
         Binding {
           target: scrollArea.contentItem
           property: "interactive"
-          value: panelColumn.implicitHeight > scrollArea.height
+          value: scrollArea.scrollable
         }
 
         Column {
           id: panelColumn
-          width: scrollArea.availableWidth
+          width: scrollArea.width - scrollArea.scrollGutter
           spacing: Style.space(14)
 
           // ---------- Hero: display icon · title/status ----------

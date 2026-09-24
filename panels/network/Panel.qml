@@ -1624,7 +1624,11 @@ Panel {
               text: sectionTitle
               foreground: root.bar.foreground
               fontFamily: root.bar.fontFamily
-              height: visible ? implicitHeight : 0
+              // contentHeight, not implicitHeight: a Text's implicitHeight is
+              // recomputed from its height, so binding height back to it is a
+              // loop (Qt says so in the log) and one more thing that keeps the
+              // popup's measured height moving after it opens.
+              height: visible ? contentHeight + topPadding + bottomPadding : 0
             }
 
             NetworkRow {
@@ -1918,7 +1922,9 @@ Panel {
           // so rows without status keep a tight one-line look.
           text: row.statusText
           visible: row.statusText !== ""
-          height: visible ? implicitHeight : 0
+          // See the note on the section header above: implicitHeight here is a
+          // binding loop.
+          height: visible ? contentHeight : 0
           color: row.statusColor
           font.family: root.bar.fontFamily
           font.pixelSize: Style.font.caption

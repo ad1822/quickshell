@@ -202,6 +202,8 @@ singletons. Three knobs cover everything:
 | `popupCollapsedWidth` / `popupCollapsedHeight` | Size the popup springs open from. `40` x `20`. |
 | `popupGrowDuration` / `popupGrowCurve` | Open/close grow. `Style.durationExpressiveSlowSpatial` (matching `components/popout`) with the slow *effects* curve — same pace, no spring. |
 | `popupFadeDuration` / `popupFadeCurve` | Opacity fade. Same duration and curve as the grow. |
+| `popupUnfoldGrace` | How long a popup waits as a pill for its content to stop resizing before unfolding anyway. `350`ms. |
+| `popupBorder` | The kit's 2px accent ring around each popup. `false` here. |
 
 `foreground` stays `Style.text` and is deliberately separate from `iconColor`:
 Omarchy ties bar glyphs and panel body text to the same colour, and the split
