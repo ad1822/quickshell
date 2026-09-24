@@ -200,8 +200,8 @@ singletons. Three knobs cover everything:
 | `popupEdgeMargin` | Clearance between a popup and the screen edge. Tracks `popupRadius`. |
 | `popupFuseWithBar` | Square off the popup corners that meet the bar. `true`. |
 | `popupCollapsedWidth` / `popupCollapsedHeight` | Size the popup springs open from. `40` x `20`. |
-| `popupGrowDuration` / `popupGrowCurve` | Open/close grow. Slow *effects* curve — no spring. |
-| `popupFadeDuration` / `popupFadeCurve` | Opacity fade. `Style.durationExpressiveSlowEffects` + curve. |
+| `popupGrowDuration` / `popupGrowCurve` | Open/close grow. `Style.durationExpressiveSlowSpatial` (matching `components/popout`) with the slow *effects* curve — same pace, no spring. |
+| `popupFadeDuration` / `popupFadeCurve` | Opacity fade. Same duration and curve as the grow. |
 
 `foreground` stays `Style.text` and is deliberately separate from `iconColor`:
 Omarchy ties bar glyphs and panel body text to the same colour, and the split

@@ -123,15 +123,22 @@ QtObject {
     // shell uses everywhere else.
     property int popupCollapsedWidth: 40
     property int popupCollapsedHeight: 20
+    // Duration matches components/popout (durationExpressiveSlowSpatial, 650ms)
+    // so the two sides of the bar open at the same pace.
+    //
     // NO SPRING. components/popout uses expressiveSlowSpatialCurve here, but
     // that curve has a control point above 1, so size sails past its target
     // and settles back — the bounce at the bottom edge of an opening popup.
     // The effects curve eases to the target without ever passing it.
-    // Do not "match components/popout" by putting the spatial curve back.
-    property int popupGrowDuration: Style.durationExpressiveSlowEffects
+    // Do not "match components/popout" by putting the spatial curve back:
+    // matching its timing is deliberate, matching its overshoot is not.
+    property int popupGrowDuration: Style.durationExpressiveSlowSpatial
     property var popupGrowCurve: Style.expressiveSlowEffectsCurve
 
-    property int popupFadeDuration: Style.durationExpressiveSlowEffects
+    // The fade runs the same length as the grow, so the card is never fully
+    // opaque while still visibly unfolding — the same pairing components/popout
+    // uses, where both behaviors share one duration.
+    property int popupFadeDuration: Style.durationExpressiveSlowSpatial
     property var popupFadeCurve: Style.expressiveSlowEffectsCurve
 
     function applyChrome() {
