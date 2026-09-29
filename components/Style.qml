@@ -17,7 +17,7 @@ QtObject {
     readonly property string fontFamily: "Adwaita Sans"
     // Drives the clock and most bar text (Clock, Network, Volume, Brightness,
     // WallpaperButton all bind to it), so it is the one lever for bar type.
-    readonly property int fontSize: 16
+    readonly property int fontSize: 14
     readonly property int fontWeight: 500
     // Theme Colors
     readonly property string rosewater: "#f5e0dc"
