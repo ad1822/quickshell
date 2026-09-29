@@ -5,9 +5,16 @@ QtObject {
     // Text color on active workspace
 
     // Font Properties
-    // UI font. Inter per the design spec; the terminal, nvim, tmux and the
-    // CLI stay on Iosevka Nerd Font Mono, which this does not touch.
-    readonly property string fontFamily: "Inter"
+    // UI font. The spec asks for SF Pro, falling back to Inter; neither is
+    // installed, and Qt silently substitutes a generic sans for a family it
+    // cannot find, which is what made the bar look wrong. Adwaita Sans is
+    // GNOME's cut of Inter and is already on the system, so it gives the
+    // intended look with nothing to install. Swap this to "SF Pro Text" or
+    // "Inter" once either is present.
+    //
+    // The terminal, nvim, tmux and the CLI are untouched by this and stay on
+    // Iosevka Nerd Font Mono.
+    readonly property string fontFamily: "Adwaita Sans"
     readonly property int fontSize: 13
     readonly property int fontWeight: 500
     // Theme Colors
