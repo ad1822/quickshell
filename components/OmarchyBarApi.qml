@@ -41,7 +41,9 @@ QtObject {
     // edges, so these stay properties rather than constants.
     property string position: "top"
     readonly property bool vertical: position === "left" || position === "right"
-    property int barSize: 30
+    // Default only — Bar.qml passes its own height in. Tracks the same Omarchy
+    // token so a panel hosted without an explicit barSize matches the bar.
+    property int barSize: Omarchy.Style.bar.sizeHorizontal
 
     // Omarchy cross-fades bar text on theme changes; nothing here drives that,
     // and leaving it undefined makes WidgetButton's Behavior warn.
