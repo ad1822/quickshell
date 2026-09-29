@@ -342,11 +342,8 @@ QtObject {
     readonly property int sizeHorizontal: root.barToken("size-horizontal", 26)
     readonly property int sizeVertical:   root.barToken("size-vertical",   28)
     readonly property int iconSlot:       root.barToken("icon-slot",       27)
-    // Raised from 16/13: the bar's widget glyphs are the one thing Bar.qml's
-    // own scaling cannot reach, and at the old values they read small against
-    // the strip. These two tokens are bar-only, so panels are unaffected.
-    readonly property int iconCanvas:     root.barToken("icon-canvas",     20)
-    readonly property int iconFont:       root.barToken("icon-font",       18)
+    readonly property int iconCanvas:     root.barToken("icon-canvas",     16)
+    readonly property int iconFont:       root.barToken("icon-font",       13)
     readonly property int statusSlot:     root.barToken("status-slot",     21)
   }
 

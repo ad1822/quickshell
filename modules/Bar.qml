@@ -11,31 +11,6 @@ import Quickshell.Wayland
 PanelWindow {
     id: barWindow
 
-    // ---- bar scale ---------------------------------------------------
-    //
-    // Fixed, not a setting. The monitor runs at 1.25x, where apps are sized
-    // correctly but this bar reads too small; it reads right at 1.5x, where
-    // apps are too big. 1.5 / 1.25 = 1.2, so scaling every bar pixel by 1.2
-    // renders the bar at exactly the size it has on a 1.5x monitor while the
-    // desktop stays at 1.25x.
-    //
-    // Two knobs, because the bar wanted bigger text without a taller strip.
-    // barScale drives geometry only — height, boxes, radii, padding, gaps —
-    // and stays at the 1.2 that reproduces the 1.5x strip height.
-    readonly property real barScale: 1.2
-
-    // barTextScale drives glyphs, and runs ahead of the geometry so the text
-    // reads large against a strip that is not itself inflated.
-    readonly property real barTextScale: 1.55
-
-    readonly property int barHeight: Math.round(30 * barScale)
-    readonly property int barExpandedHeight: Math.round(64 * barScale)
-
-    // Geometry keeps its fractional value, so hairlines stay hairlines;
-    // font sizes round, since pixelSize is an int.
-    function px(v) { return Math.max(1, v * barScale); }
-    function fontPx(v) { return Math.max(1, Math.round(v * barTextScale)); }
-
     property bool modulesExpanded: false
     property bool barExpanded: false
     property bool isHovered: false
@@ -245,7 +220,7 @@ PanelWindow {
         id: barApi
 
         window: barWindow.contentItem
-        barSize: barWindow.barHeight
+        barSize: 30
         position: "top"
     }
 
@@ -287,10 +262,10 @@ PanelWindow {
     anchors.top: true
     anchors.left: true
     anchors.right: true
-    implicitHeight: barWindow.barExpanded ? barWindow.barHeight : ((barWindow.isHovered || barWindow.powermenuActive || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? barWindow.barExpandedHeight : barWindow.barHeight)
-    margins.top: barWindow.barExpanded ? 0 : barWindow.px(4)
+    implicitHeight: barWindow.barExpanded ? 30 : ((barWindow.isHovered || barWindow.powermenuActive || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? 64 : 30)
+    margins.top: barWindow.barExpanded ? 0 : 4
     color: "transparent"
-    WlrLayershell.exclusiveZone: barWindow.barHeight
+    WlrLayershell.exclusiveZone: 30
     WlrLayershell.keyboardFocus: powermenuActive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
     Timer {
@@ -329,10 +304,10 @@ PanelWindow {
 
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        height: barWindow.barExpanded ? barWindow.barHeight : ((barWindow.isHovered || barWindow.powermenuActive || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? barWindow.barExpandedHeight : barWindow.barHeight)
+        height: barWindow.barExpanded ? 30 : ((barWindow.isHovered || barWindow.powermenuActive || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? 64 : 30)
         color: "#11111b"
-        width: barWindow.barExpanded ? parent.width : (barWindow.powermenuActive ? barWindow.px(260) : ((barWindow.isHovered || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? barWindow.px(360) : (barWindow.activeToastNotification !== null ? barWindow.px(220) : (barWindow.osdMode !== "" ? barWindow.px(170) : (barClock.width + barWindow.px(10))))))
-        radius: barWindow.barExpanded ? 0 : ((barWindow.isHovered || barWindow.powermenuActive || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? barWindow.px(24) : barWindow.px(15))
+        width: barWindow.barExpanded ? parent.width : (barWindow.powermenuActive ? 260 : ((barWindow.isHovered || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? 360 : (barWindow.activeToastNotification !== null ? 220 : (barWindow.osdMode !== "" ? 170 : (barClock.width + 10)))))
+        radius: barWindow.barExpanded ? 0 : ((barWindow.isHovered || barWindow.powermenuActive || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? 24 : 15)
         clip: true
 
         MouseArea {
@@ -505,7 +480,8 @@ PanelWindow {
 
                 Row {
                     anchors.centerIn: parent
-                    spacing: barWindow.px(8)
+                    spacing: 8
+
                     Text {
                         text: {
                             if (barWindow.osdMode === "volume") {
@@ -543,20 +519,20 @@ PanelWindow {
                                 return Style.lavender;
                         }
                         font.family: "Material Symbols Rounded"
-                        font.pixelSize: barWindow.fontPx(16)
+                        font.pixelSize: 16
                         verticalAlignment: Text.AlignVCenter
                     }
 
                     Rectangle {
-                        width: barWindow.px(120)
-                        height: barWindow.px(4)
-                        radius: barWindow.px(2)
+                        width: 120
+                        height: 4
+                        radius: 2
                         color: Style.surface0
                         anchors.verticalCenter: parent.verticalCenter
 
                         Rectangle {
                             height: parent.height
-                            radius: barWindow.px(2)
+                            radius: 2
                             color: {
                                 if (barWindow.osdMode === "volume")
                                     return barWindow.osdMuted ? Style.overlay1 : Style.mauve;
@@ -639,10 +615,11 @@ PanelWindow {
                     id: activeWindowIconOnly
 
                     anchors.left: parent.left
-                    anchors.leftMargin: barWindow.px(20)
+                    anchors.leftMargin: 20
                     anchors.verticalCenter: parent.verticalCenter
-                    width: barWindow.px(24)
-                    height: barWindow.px(24)
+                    width: 24
+                    height: 24
+
                     // Application Icon
                     Image {
                         id: activeAppIcon
@@ -773,7 +750,7 @@ PanelWindow {
                         text: "widgets"
                         color: Style.subtext0
                         font.family: "Material Symbols Rounded"
-                        font.pixelSize: barWindow.fontPx(18)
+                        font.pixelSize: 18
                         anchors.centerIn: parent
                         visible: !activeAppIcon.visible
                     }
@@ -813,12 +790,13 @@ PanelWindow {
                 // Middle Section: Large Time & Date
                 Column {
                     anchors.centerIn: parent
-                    spacing: barWindow.px(2)
+                    spacing: 2
+
                     Text {
                         text: Qt.formatDateTime(barClock.currentTime, "HH:mm")
                         color: Style.text
                         font.family: Style.fontFamily
-                        font.pixelSize: barWindow.fontPx(22)
+                        font.pixelSize: 22
                         font.weight: Font.Bold
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
@@ -827,7 +805,7 @@ PanelWindow {
                         text: Qt.formatDateTime(barClock.currentTime, "dddd, MMMM d")
                         color: Style.subtext0
                         font.family: Style.fontFamily
-                        font.pixelSize: barWindow.fontPx(11)
+                        font.pixelSize: 11
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
 
@@ -838,7 +816,7 @@ PanelWindow {
                     id: hoverBatteryWidget
 
                     anchors.right: parent.right
-                    anchors.rightMargin: barWindow.px(12)
+                    anchors.rightMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
                     transparentBg: true
                 }
@@ -902,12 +880,12 @@ PanelWindow {
                 Rectangle {
                     id: hoverPlayerArt
 
-                    width: barWindow.px(44)
-                    height: barWindow.px(44)
-                    radius: barWindow.px(8)
+                    width: 44
+                    height: 44
+                    radius: 8
                     color: Style.surface1
                     anchors.left: parent.left
-                    anchors.leftMargin: barWindow.px(16)
+                    anchors.leftMargin: 16
                     anchors.verticalCenter: parent.verticalCenter
 
                     Image {
@@ -922,7 +900,7 @@ PanelWindow {
                         text: "music_note"
                         color: Style.subtext1
                         font.family: "Material Symbols Rounded"
-                        font.pixelSize: barWindow.fontPx(18)
+                        font.pixelSize: 18
                         anchors.centerIn: parent
                         visible: !barWindow.playerWidget || barWindow.playerWidget.localArtUrl === ""
                     }
@@ -934,13 +912,14 @@ PanelWindow {
                     id: hoverPlayerControls
 
                     anchors.right: parent.right
-                    anchors.rightMargin: barWindow.px(16)
+                    anchors.rightMargin: 16
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: barWindow.px(12)
+                    spacing: 12
+
                     // Previous Track
                     MouseArea {
-                        width: barWindow.px(24)
-                        height: barWindow.px(24)
+                        width: 24
+                        height: 24
                         anchors.verticalCenter: parent.verticalCenter
                         cursorShape: Qt.PointingHandCursor
                         hoverEnabled: true
@@ -950,7 +929,7 @@ PanelWindow {
                             text: "skip_previous"
                             color: parent.containsMouse ? Style.mauve : Style.text
                             font.family: "Material Symbols Rounded"
-                            font.pixelSize: barWindow.fontPx(20)
+                            font.pixelSize: 20
                             anchors.centerIn: parent
                         }
 
@@ -960,9 +939,9 @@ PanelWindow {
                     Rectangle {
                         id: hoverPlayButton
 
-                        width: barWindow.px(32)
-                        height: barWindow.px(32)
-                        radius: barWindow.px(16)
+                        width: 32
+                        height: 32
+                        radius: 16
                         color: hoverPlayMouse.containsMouse ? "#f5e0dc" : "#ffffff"
                         anchors.verticalCenter: parent.verticalCenter
                         scale: hoverPlayMouse.containsMouse ? 1.08 : 1
@@ -971,7 +950,7 @@ PanelWindow {
                             text: barWindow.playerWidget && barWindow.playerWidget.isPlaying ? "pause" : "play_arrow"
                             color: "#11111b"
                             font.family: "Material Symbols Rounded"
-                            font.pixelSize: barWindow.fontPx(16)
+                            font.pixelSize: 16
                             anchors.centerIn: parent
                         }
 
@@ -996,8 +975,8 @@ PanelWindow {
 
                     // Next Track
                     MouseArea {
-                        width: barWindow.px(24)
-                        height: barWindow.px(24)
+                        width: 24
+                        height: 24
                         anchors.verticalCenter: parent.verticalCenter
                         cursorShape: Qt.PointingHandCursor
                         hoverEnabled: true
@@ -1007,7 +986,7 @@ PanelWindow {
                             text: "skip_next"
                             color: parent.containsMouse ? Style.mauve : Style.text
                             font.family: "Material Symbols Rounded"
-                            font.pixelSize: barWindow.fontPx(20)
+                            font.pixelSize: 20
                             anchors.centerIn: parent
                         }
 
@@ -1019,15 +998,16 @@ PanelWindow {
                 Column {
                     anchors.left: hoverPlayerArt.right
                     anchors.right: hoverPlayerControls.left
-                    anchors.leftMargin: barWindow.px(12)
-                    anchors.rightMargin: barWindow.px(12)
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: barWindow.px(2)
+                    spacing: 2
+
                     Text {
                         text: barWindow.playerWidget ? barWindow.playerWidget.title : ""
                         color: Style.text
                         font.family: Style.fontFamily
-                        font.pixelSize: barWindow.fontPx(12)
+                        font.pixelSize: 12
                         font.bold: true
                         width: parent.width
                         elide: Text.ElideRight
@@ -1037,7 +1017,7 @@ PanelWindow {
                         text: barWindow.playerWidget ? barWindow.playerWidget.artist : ""
                         color: Style.subtext0
                         font.family: Style.fontFamily
-                        font.pixelSize: barWindow.fontPx(10)
+                        font.pixelSize: 10
                         width: parent.width
                         elide: Text.ElideRight
                         visible: barWindow.playerWidget !== null && barWindow.playerWidget.artist !== ""
@@ -1104,10 +1084,10 @@ PanelWindow {
                 Item {
                     id: notifIcon
 
-                    width: barWindow.toastHasBody ? barWindow.px(20) : barWindow.px(12)
-                    height: barWindow.toastHasBody ? barWindow.px(20) : barWindow.px(12)
+                    width: barWindow.toastHasBody ? 20 : 12
+                    height: barWindow.toastHasBody ? 20 : 12
                     anchors.left: parent.left
-                    anchors.leftMargin: barWindow.toastHasBody ? barWindow.px(16) : barWindow.px(10)
+                    anchors.leftMargin: barWindow.toastHasBody ? 16 : 10
                     anchors.verticalCenter: parent.verticalCenter
 
                     Image {
@@ -1136,7 +1116,7 @@ PanelWindow {
                         text: "notifications"
                         color: barWindow.toastHasBody ? Style.mauve : "#ffffff"
                         font.family: "Material Symbols Rounded"
-                        font.pixelSize: barWindow.toastHasBody ? barWindow.fontPx(20) : barWindow.fontPx(12)
+                        font.pixelSize: barWindow.toastHasBody ? 20 : 12
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         visible: !notifAppIcon.visible
@@ -1148,12 +1128,12 @@ PanelWindow {
                 Rectangle {
                     id: notifCloseBtn
 
-                    width: barWindow.toastHasBody ? barWindow.px(24) : barWindow.px(18)
-                    height: barWindow.toastHasBody ? barWindow.px(24) : barWindow.px(18)
-                    radius: barWindow.toastHasBody ? barWindow.px(12) : barWindow.px(9)
+                    width: barWindow.toastHasBody ? 24 : 18
+                    height: barWindow.toastHasBody ? 24 : 18
+                    radius: barWindow.toastHasBody ? 12 : 9
                     color: closeMouseArea.containsMouse ? Qt.rgba(243 / 255, 139 / 255, 168 / 255, 0.15) : "transparent"
                     anchors.right: parent.right
-                    anchors.rightMargin: barWindow.toastHasBody ? barWindow.px(16) : barWindow.px(10)
+                    anchors.rightMargin: barWindow.toastHasBody ? 16 : 10
                     anchors.verticalCenter: parent.verticalCenter
                     visible: barWindow.toastHasBody
 
@@ -1161,7 +1141,7 @@ PanelWindow {
                         text: "close"
                         color: closeMouseArea.containsMouse ? Style.red : Style.overlay1
                         font.family: "Material Symbols Rounded"
-                        font.pixelSize: barWindow.toastHasBody ? barWindow.fontPx(16) : barWindow.fontPx(12)
+                        font.pixelSize: barWindow.toastHasBody ? 16 : 12
                         anchors.centerIn: parent
                     }
 
@@ -1215,17 +1195,18 @@ PanelWindow {
                 Column {
                     anchors.left: notifIcon.right
                     anchors.right: barWindow.toastHasBody ? notifCloseBtn.left : parent.right
-                    anchors.leftMargin: barWindow.toastHasBody ? barWindow.px(12) : barWindow.px(8)
-                    anchors.rightMargin: barWindow.toastHasBody ? barWindow.px(12) : barWindow.px(12)
+                    anchors.leftMargin: barWindow.toastHasBody ? 12 : 8
+                    anchors.rightMargin: barWindow.toastHasBody ? 12 : 12
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.verticalCenterOffset: (barWindow.activeToastNotification !== null && barWindow.toastHasBody) ? 0 : 1
-                    spacing: barWindow.px(1)
+                    spacing: 1
+
                     // Summary (Title)
                     Text {
                         text: (barWindow.activeToastNotification !== null && barWindow.activeToastNotification.summary) ? barWindow.activeToastNotification.summary : ""
                         color: barWindow.toastHasBody ? Style.text : "#ffffff"
                         font.family: Style.fontFamily
-                        font.pixelSize: barWindow.toastHasBody ? barWindow.fontPx(13) : barWindow.fontPx(10)
+                        font.pixelSize: barWindow.toastHasBody ? 13 : 10
                         font.bold: true
                         elide: Text.ElideRight
                         width: parent.width
@@ -1236,7 +1217,7 @@ PanelWindow {
                         text: (barWindow.activeToastNotification !== null && barWindow.activeToastNotification.body) ? barWindow.activeToastNotification.body : ""
                         color: Style.subtext1
                         font.family: Style.fontFamily
-                        font.pixelSize: barWindow.fontPx(11)
+                        font.pixelSize: 11
                         width: parent.width
                         elide: Text.ElideRight
                         visible: text !== ""
@@ -1331,12 +1312,13 @@ PanelWindow {
 
                 Row {
                     anchors.centerIn: parent
-                    spacing: barWindow.px(24)
+                    spacing: 24
+
                     // Logout
                     Rectangle {
-                        width: barWindow.px(40)
-                        height: barWindow.px(40)
-                        radius: barWindow.px(20)
+                        width: 40
+                        height: 40
+                        radius: 20
                         color: (barLogoutMouse.containsMouse || (hoverPowermenuContent.focus && hoverPowermenuContent.activeIndex === 0)) ? Style.surface1 : "transparent"
                         Behavior on color { ColorAnimation { duration: 150 } }
 
@@ -1345,7 +1327,7 @@ PanelWindow {
                             color: (barLogoutMouse.containsMouse || (hoverPowermenuContent.focus && hoverPowermenuContent.activeIndex === 0)) ? Style.red : Style.lavender
                             Behavior on color { ColorAnimation { duration: 150 } }
                             font.family: "Material Symbols Rounded"
-                            font.pixelSize: barWindow.fontPx(22)
+                            font.pixelSize: 22
                             anchors.centerIn: parent
                         }
 
@@ -1365,9 +1347,9 @@ PanelWindow {
 
                     // Reboot
                     Rectangle {
-                        width: barWindow.px(40)
-                        height: barWindow.px(40)
-                        radius: barWindow.px(20)
+                        width: 40
+                        height: 40
+                        radius: 20
                         color: (barRebootMouse.containsMouse || (hoverPowermenuContent.focus && hoverPowermenuContent.activeIndex === 1)) ? Style.surface1 : "transparent"
                         Behavior on color { ColorAnimation { duration: 150 } }
 
@@ -1376,7 +1358,7 @@ PanelWindow {
                             color: (barRebootMouse.containsMouse || (hoverPowermenuContent.focus && hoverPowermenuContent.activeIndex === 1)) ? Style.red : Style.lavender
                             Behavior on color { ColorAnimation { duration: 150 } }
                             font.family: "Material Symbols Rounded"
-                            font.pixelSize: barWindow.fontPx(22)
+                            font.pixelSize: 22
                             anchors.centerIn: parent
                         }
 
@@ -1396,9 +1378,9 @@ PanelWindow {
 
                     // Shutdown
                     Rectangle {
-                        width: barWindow.px(40)
-                        height: barWindow.px(40)
-                        radius: barWindow.px(20)
+                        width: 40
+                        height: 40
+                        radius: 20
                         color: (barShutdownMouse.containsMouse || (hoverPowermenuContent.focus && hoverPowermenuContent.activeIndex === 2)) ? Style.surface1 : "transparent"
                         Behavior on color { ColorAnimation { duration: 150 } }
 
@@ -1407,7 +1389,7 @@ PanelWindow {
                             color: (barShutdownMouse.containsMouse || (hoverPowermenuContent.focus && hoverPowermenuContent.activeIndex === 2)) ? Style.red : Style.lavender
                             Behavior on color { ColorAnimation { duration: 150 } }
                             font.family: "Material Symbols Rounded"
-                            font.pixelSize: barWindow.fontPx(22)
+                            font.pixelSize: 22
                             anchors.centerIn: parent
                         }
 
@@ -1496,10 +1478,10 @@ PanelWindow {
         id: rightContainer
 
         anchors.right: parent.right
-        anchors.rightMargin: barWindow.barExpanded ? 0 : -barWindow.px(500)
+        anchors.rightMargin: barWindow.barExpanded ? 0 : -500
         anchors.verticalCenter: parent.verticalCenter
         height: parent.height
-        spacing: barWindow.px(6)
+        spacing: 6
         opacity: barWindow.barExpanded ? 1 : 0
 
         // Widget order comes from bar.json's right section. The separators
@@ -1528,7 +1510,7 @@ PanelWindow {
         id: workspacesWidget
 
         anchors.left: parent.left
-        anchors.leftMargin: barWindow.barExpanded ? 0 : -barWindow.px(300)
+        anchors.leftMargin: barWindow.barExpanded ? 0 : -300
         anchors.verticalCenter: parent.verticalCenter
         opacity: barWindow.barExpanded ? 1 : 0
 
@@ -1548,29 +1530,30 @@ PanelWindow {
         id: hamburgerButton
 
         anchors.left: workspacesWidget.right
-        anchors.leftMargin: barWindow.px(8)
+        anchors.leftMargin: 8
         anchors.verticalCenter: parent.verticalCenter
-        width: barWindow.px(30)
-        height: barWindow.px(30)
-        radius: barWindow.px(8)
+        width: 30
+        height: 30
+        radius: 8
         color: "transparent"
         // color: hamburgerMouse.containsMouse ? Style.surface0 : Style.base
         border.color: Style.surface1
-        border.width: barWindow.px(0)
+        border.width: 0
         opacity: barWindow.barExpanded ? 1 : 0
 
         // Centered morphing vector lines
         Item {
             anchors.centerIn: parent
-            width: barWindow.px(12)
-            height: barWindow.px(12)
+            width: 12
+            height: 12
+
             // Top Line
             Rectangle {
                 id: topLine
 
-                width: barWindow.px(12)
-                height: barWindow.px(1.5)
-                radius: barWindow.px(0.75)
+                width: 12
+                height: 1.5
+                radius: 0.75
                 color: Style.text
                 x: 0
                 y: barWindow.modulesExpanded ? 6 : 3
@@ -1600,9 +1583,9 @@ PanelWindow {
             Rectangle {
                 id: middleLine
 
-                width: barWindow.modulesExpanded ? 0 : barWindow.px(12)
-                height: barWindow.px(1.5)
-                radius: barWindow.px(0.75)
+                width: barWindow.modulesExpanded ? 0 : 12
+                height: 1.5
+                radius: 0.75
                 color: Style.text
                 x: 0
                 y: 6
@@ -1629,9 +1612,9 @@ PanelWindow {
             Rectangle {
                 id: bottomLine
 
-                width: barWindow.px(12)
-                height: barWindow.px(1.5)
-                radius: barWindow.px(0.75)
+                width: 12
+                height: 1.5
+                radius: 0.75
                 color: Style.text
                 x: 0
                 y: barWindow.modulesExpanded ? 6 : 9
@@ -1821,7 +1804,7 @@ PanelWindow {
 
             region: "left"
             controller: barDrag
-            spacing: barWindow.px(2)
+            spacing: 2
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
 
