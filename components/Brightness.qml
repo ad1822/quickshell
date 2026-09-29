@@ -36,7 +36,7 @@ Rectangle {
         id: contentText
 
         text: brightRoot.brightnessIcon(brightRoot.brightness)
-        color: Style.lavender
+        color: Style.text
         font.family: "Material Symbols Rounded"
         font.pixelSize: Style.fontSize
         font.weight: Style.fontWeight

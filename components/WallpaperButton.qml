@@ -20,7 +20,7 @@ Rectangle {
         text: "wallpaper"
         // Style.lavender is what OmarchyBarApi hands the other bar glyphs as
         // barForeground, so this matches rather than standing out.
-        color: Style.lavender
+        color: Style.text
         font.family: "Material Symbols Rounded"
         font.pixelSize: Omarchy.Style.bar.iconFont
         font.weight: Style.fontWeight

@@ -26,7 +26,7 @@ Rectangle {
 
             height: 6
             radius: 3
-            color: Style.blue
+            color: Style.text
             anchors.verticalCenter: parent.verticalCenter
 
             // Bindings to match the active dot wrapper's position and width dynamically

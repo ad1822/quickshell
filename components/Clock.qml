@@ -44,7 +44,7 @@ Rectangle {
                     width: 2
                     height: 4
                     radius: 1
-                    color: Style.mauve
+                    color: Style.text
                     anchors.bottom: parent.bottom
 
                     SequentialAnimation {
@@ -79,7 +79,7 @@ Rectangle {
                     width: 2
                     height: 6
                     radius: 1
-                    color: Style.pink
+                    color: Style.text
                     anchors.bottom: parent.bottom
 
                     SequentialAnimation {
@@ -114,7 +114,7 @@ Rectangle {
                     width: 2
                     height: 5
                     radius: 1
-                    color: Style.mauve
+                    color: Style.text
                     anchors.bottom: parent.bottom
 
                     SequentialAnimation {
@@ -214,7 +214,7 @@ Rectangle {
         // 3. Dot Separator (Only visible when unwrapped)
         Text {
             text: "•"
-            color: Style.mauve
+            color: Style.text
             font.family: Style.fontFamily
             font.pixelSize: Style.fontSize
             verticalAlignment: Text.AlignVCenter

@@ -34,7 +34,7 @@ Rectangle {
 
         Text {
             text: "arrow_downward"
-            color: Style.green
+            color: Style.text
             font.family: "Material Symbols Rounded"
             font.pixelSize: Style.fontSize
             font.weight: Style.fontWeight
@@ -52,7 +52,7 @@ Rectangle {
 
         Text {
             text: "arrow_upward"
-            color: Style.red
+            color: Style.text
             font.family: "Material Symbols Rounded"
             font.pixelSize: Style.fontSize
             font.weight: Style.fontWeight

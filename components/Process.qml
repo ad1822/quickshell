@@ -23,7 +23,7 @@ Rectangle {
 
         Text {
             text: "developer_board"
-            color: Style.blue
+            color: Style.text
             font.family: "Material Symbols Rounded"
             font.pixelSize: Style.fontSize
             font.weight: Style.fontWeight

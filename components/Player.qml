@@ -208,7 +208,7 @@ Item {
                 width: 2
                 height: 4
                 radius: 1
-                color: Style.mauve
+                color: Style.text
                 anchors.bottom: parent.bottom
 
                 SequentialAnimation {
@@ -243,7 +243,7 @@ Item {
                 width: 2
                 height: 6
                 radius: 1
-                color: Style.pink
+                color: Style.text
                 anchors.bottom: parent.bottom
 
                 SequentialAnimation {
@@ -278,7 +278,7 @@ Item {
                 width: 2
                 height: 3
                 radius: 1
-                color: Style.blue
+                color: Style.text
                 anchors.bottom: parent.bottom
 
                 SequentialAnimation {

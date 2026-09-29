@@ -102,7 +102,7 @@ Item {
         width: slot.controller && slot.controller.vertical ? parent.width : 2
         height: slot.controller && slot.controller.vertical ? 2 : parent.height
         radius: 1
-        color: Style.mauve
+        color: Style.text
         visible: slot.isDropTarget
         x: slot.controller && slot.controller.vertical ? 0 : (slot.dropAfter ? parent.width - width : 0)
         y: slot.controller && slot.controller.vertical ? (slot.dropAfter ? parent.height - height : 0) : 0

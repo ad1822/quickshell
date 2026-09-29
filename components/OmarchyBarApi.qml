@@ -32,7 +32,10 @@ QtObject {
     // `bar.barForeground`, which Omarchy ties to the content colour; splitting
     // them is what lets the icons take an accent without tinting panel text.
     // Change this one line to recolour every imported panel's bar icon.
-    property color iconColor: Style.lavender
+    // Neutral, not an accent: the bar reads as one surface when its glyphs
+    // share the text colour. Colour in the bar is reserved for state that
+    // means something, such as battery charge.
+    property color iconColor: Style.text
     readonly property color barForeground: api.iconColor
 
     property string fontFamily: Style.fontFamily
