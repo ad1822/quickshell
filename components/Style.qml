@@ -8,40 +8,33 @@ QtObject {
     readonly property string fontFamily: "Iosevka"
     readonly property int fontSize: 13
     readonly property int fontWeight: 500
-    // Theme Colors -- Graphite.
-    //
-    // Names are kept from the previous Catppuccin palette so every call site
-    // still resolves; only the values changed. The scale runs crust (darkest
-    // surface) through text (primary), and is deliberately neutral: the
-    // saturated entries below are for errors, warnings, success and links,
-    // not decoration. lavender/rosewater are neutral on purpose -- lavender
-    // is what OmarchyBarApi paints bar glyphs with.
-    readonly property string rosewater: "#F5F5F7"
-    readonly property string flamingo: "#FF9F0A"
-    readonly property string pink: "#BF5AF2"
-    readonly property string mauve: "#BF5AF2"
-    readonly property string red: "#FF453A"
-    readonly property string maroon: "#FF453A"
-    readonly property string peach: "#FF9F0A"
-    readonly property string yellow: "#FFD60A"
-    readonly property string green: "#30D158"
-    readonly property string teal: "#64D2FF"
-    readonly property string sky: "#64D2FF"
-    readonly property string sapphire: "#64D2FF"
-    readonly property string blue: "#0A84FF"
-    readonly property string lavender: "#F5F5F7"
-    readonly property string text: "#F5F5F7"
-    readonly property string subtext1: "#A1A1A6"
-    readonly property string subtext0: "#8E8E93"
-    readonly property string overlay2: "#6E6E73"
-    readonly property string overlay1: "#48484A"
-    readonly property string overlay0: "#2C2C2E"
-    readonly property string surface2: "#242426"
-    readonly property string surface1: "#1C1C1E"
-    readonly property string surface0: "#151517"
-    readonly property string base: "#0D0D0F"
-    readonly property string mantle: "#0A0A0B"
-    readonly property string crust: "#060607"
+    // Theme Colors
+    readonly property string rosewater: "#f5e0dc"
+    readonly property string flamingo: "#f2cdcd"
+    readonly property string pink: "#f5c2e7"
+    readonly property string mauve: "#cba6f7"
+    readonly property string red: "#f38ba8"
+    readonly property string maroon: "#eba0ac"
+    readonly property string peach: "#fab387"
+    readonly property string yellow: "#f9e2af"
+    readonly property string green: "#a6e3a1"
+    readonly property string teal: "#94e2d5"
+    readonly property string sky: "#89dceb"
+    readonly property string sapphire: "#74c7ec"
+    readonly property string blue: "#89b4fa"
+    readonly property string lavender: "#b4befe"
+    readonly property string text: "#cdd6f4"
+    readonly property string subtext1: "#bac2de"
+    readonly property string subtext0: "#a6adc8"
+    readonly property string overlay2: "#9399b2"
+    readonly property string overlay1: "#7f849c"
+    readonly property string overlay0: "#6c7086"
+    readonly property string surface2: "#585b70"
+    readonly property string surface1: "#45475a"
+    readonly property string surface0: "#313244"
+    readonly property string base: "#1e1e2e"
+    readonly property string mantle: "#181825"
+    readonly property string crust: "#11111b"
 
     // Caelestia Expressive Animation Curves (Bezier Control Points)
     readonly property var expressiveDefaultSpatialCurve: [0.38, 1.21, 0.22, 1, 1, 1]
