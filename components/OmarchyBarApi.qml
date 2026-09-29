@@ -149,14 +149,12 @@ QtObject {
     property int popupFadeDuration: Style.durationExpressiveSlowSpatial
     property var popupFadeCurve: Style.expressiveSlowEffectsCurve
 
-    // Opening only, for both the grow and the fade. Not the spatial curve
-    // components/popout uses: its control point above 1 overshoots the bottom
-    // edge on these taller cards. The grow/fade curves above handle closing.
-    property var popupOpenCurve: Style.expressiveSlowEffectsCurve
-    // The fade, though, does use components/popout's spatial curve: on opacity
-    // its overshoot just clamps at 1, so the card turns solid early and is seen
-    // growing rather than fading in as a translucent full-size ghost.
-    property var popupOpenFadeCurve: Style.expressiveSlowSpatialCurve
+    // Opening only, for both the grow and the fade: the same spring
+    // components/popout (CPU, network) opens with. Those popups sit in a fixed
+    // window as tall as the card, so the spring's overshoot is cut off at the
+    // bottom and only shows sideways; KeyboardPanel caps the card's height the
+    // same way. The grow/fade curves above handle closing.
+    property var popupOpenCurve: Style.expressiveSlowSpatialCurve
 
     // How long a popup may sit as a pill on the bar's edge waiting for its
     // content to stop resizing before it unfolds anyway. Panels measure

@@ -525,7 +525,9 @@ PanelWindow {
         x: root.cardOrigin.x + (root.barPos === "left" || root.barPos === "right" ? 0 : (root.contentWidth - width) / 2)
         y: root.cardOrigin.y + (root.barPos === "bottom" ? root.contentHeight - height : 0)
         width: collapsedWidth + (targetWidth - collapsedWidth) * growth
-        height: collapsedHeight + (targetHeight - collapsedHeight) * growth
+        // Capped at the target, like components/popout's fixed-height window
+        // clips its card: the open spring may overshoot sideways, never down.
+        height: Math.min(targetHeight, collapsedHeight + (targetHeight - collapsedHeight) * growth)
         // Content is laid out at full size, so it has to be clipped while the card
         // is still smaller than it.
         clip: true
@@ -647,7 +649,7 @@ PanelWindow {
             NumberAnimation {
                 duration: root.bar && root.bar.popupFadeDuration !== undefined ? root.bar.popupFadeDuration : 140
                 easing.type: root.bar && root.bar.popupFadeCurve !== undefined ? Easing.Bezier : Easing.OutCubic
-                easing.bezierCurve: card.useOpenCurve ? (root.bar.popupOpenFadeCurve !== undefined ? root.bar.popupOpenFadeCurve : root.bar.popupOpenCurve) : root.bar && root.bar.popupFadeCurve !== undefined ? root.bar.popupFadeCurve : []
+                easing.bezierCurve: card.useOpenCurve ? root.bar.popupOpenCurve : root.bar && root.bar.popupFadeCurve !== undefined ? root.bar.popupFadeCurve : []
             }
 
         }
