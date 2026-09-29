@@ -19,6 +19,7 @@ Item {
   readonly property bool usesMaterial: materialName !== ""
   readonly property string renderedText: usesMaterial ? materialName : root.text
   readonly property string renderedFamily: usesMaterial ? MaterialIcons.family : root.fontFamily
+  readonly property int renderedWeight: usesMaterial ? Font.Light : Font.Normal
 
   readonly property int renderedFontSize: Math.max(1, Math.round(fontSize))
   readonly property real tightWidth: Math.max(1, glyphMetrics.tightBoundingRect.width)
@@ -30,6 +31,7 @@ Item {
     id: glyphMetrics
     font.family: root.renderedFamily
     font.pixelSize: root.renderedFontSize
+    font.weight: root.renderedWeight
     text: root.renderedText
   }
 
@@ -44,6 +46,7 @@ Item {
     color: root.color
     font.family: root.renderedFamily
     font.pixelSize: root.renderedFontSize
+    font.weight: root.renderedWeight
     renderType: Text.NativeRendering
   }
 
