@@ -497,10 +497,11 @@ PanelWindow {
         // Set once the content this popup is about to reveal has stopped
         // resizing, which is what actually starts the unfold.
         property bool unfolded: false
-        // Opening only fades in at full size; the fold into the bar is kept for
-        // closing. Set just before `unfolded` flips so the growth Behavior is
-        // already off when the open snaps growth to 1.
+        // Opening springs out of the bar like the popups in components/popout;
+        // closing keeps its own curve. Set just before `unfolded` flips so the
+        // Behaviors start with the right curve.
         property bool opening: false
+        readonly property bool useOpenCurve: opening && root.bar && root.bar.popupOpenCurve !== undefined
         // The size the unfold grows into. Bound live, but behind a short glide, so
         // a panel that changes size while it is up — a scan filling in, a section
         // expanding — slides the card to its new size instead of snapping to it,
@@ -646,18 +647,18 @@ PanelWindow {
             NumberAnimation {
                 duration: root.bar && root.bar.popupFadeDuration !== undefined ? root.bar.popupFadeDuration : 140
                 easing.type: root.bar && root.bar.popupFadeCurve !== undefined ? Easing.Bezier : Easing.OutCubic
-                easing.bezierCurve: root.bar && root.bar.popupFadeCurve !== undefined ? root.bar.popupFadeCurve : []
+                easing.bezierCurve: card.useOpenCurve ? root.bar.popupOpenCurve : root.bar && root.bar.popupFadeCurve !== undefined ? root.bar.popupFadeCurve : []
             }
 
         }
 
         Behavior on growth {
-            enabled: !card.opening && !root.popoutSwitching && !root.popoutSwitchClosing
+            enabled: !root.popoutSwitching && !root.popoutSwitchClosing
 
             NumberAnimation {
                 duration: root.bar && root.bar.popupGrowDuration !== undefined ? root.bar.popupGrowDuration : 0
                 easing.type: root.bar && root.bar.popupGrowCurve !== undefined ? Easing.Bezier : Easing.OutCubic
-                easing.bezierCurve: root.bar && root.bar.popupGrowCurve !== undefined ? root.bar.popupGrowCurve : []
+                easing.bezierCurve: card.useOpenCurve ? root.bar.popupOpenCurve : root.bar && root.bar.popupGrowCurve !== undefined ? root.bar.popupGrowCurve : []
             }
 
         }
