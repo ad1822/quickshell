@@ -16,36 +16,36 @@ Rectangle {
         var pct = Math.round(percentage * 100);
         if (isCharging) {
             if (pct >= 95)
-                return "battery_charging_full";
+                return "battery_android_bolt";
             else if (pct >= 90)
-                return "battery_charging_90";
+                return "battery_android_bolt";
             else if (pct >= 80)
-                return "battery_charging_80";
+                return "battery_android_bolt";
             else if (pct >= 60)
-                return "battery_charging_60";
+                return "battery_android_bolt";
             else if (pct >= 50)
-                return "battery_charging_50";
+                return "battery_android_bolt";
             else if (pct >= 30)
-                return "battery_charging_30";
+                return "battery_android_bolt";
             else
-                return "battery_charging_20";
+                return "battery_android_bolt";
         } else {
             if (pct >= 95)
-                return "battery_full";
+                return "battery_android_full";
             else if (pct >= 85)
-                return "battery_6_bar";
+                return "battery_android_6";
             else if (pct >= 70)
-                return "battery_5_bar";
+                return "battery_android_5";
             else if (pct >= 55)
-                return "battery_4_bar";
+                return "battery_android_4";
             else if (pct >= 40)
-                return "battery_3_bar";
+                return "battery_android_3";
             else if (pct >= 25)
-                return "battery_2_bar";
+                return "battery_android_2";
             else if (pct >= 15)
-                return "battery_1_bar";
+                return "battery_android_1";
             else
-                return "battery_0_bar";
+                return "battery_android_0";
         }
     }
 
@@ -77,7 +77,7 @@ Rectangle {
 
             text: {
                 if (!battRoot.isLaptopBattery)
-                    return "battery_unknown";
+                    return "battery_android_question";
 
                 var pct = Math.round(battRoot.percentage * 100);
                 var isAC = !UPower.onBattery;

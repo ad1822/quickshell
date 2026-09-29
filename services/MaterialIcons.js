@@ -20,86 +20,86 @@
 var family = "Material Symbols Rounded";
 
 var codePoints = [
-    // --------------------------------------------------- network
-    [0xF092F, "signal_wifi_0_bar"],          // wifi-strength-outline
-    [0xF091F, "network_wifi_1_bar"],
-    [0xF0922, "network_wifi_2_bar"],
-    [0xF0925, "network_wifi_3_bar"],
-    [0xF0928, "wifi"],                       // full strength
-    [0xF0929, "signal_wifi_bad"],            // captive portal / limited
-    [0xF092E, "wifi_off"],
-    [0xF0200, "lan"],                        // ethernet
-    [0xF0202, "link_off"],                   // ethernet, limited
+  // --------------------------------------------------- network
+  [0xF092F, "signal_wifi_0_bar"],          // wifi-strength-outline
+  [0xF091F, "network_wifi_1_bar"],
+  [0xF0922, "network_wifi_2_bar"],
+  [0xF0925, "network_wifi_3_bar"],
+  [0xF0928, "wifi"],                       // full strength
+  [0xF0929, "signal_wifi_bad"],            // captive portal / limited
+  [0xF092E, "wifi_off"],
+  [0xF0200, "lan"],                        // ethernet
+  [0xF0202, "link_off"],                   // ethernet, limited
 
-    // ------------------------------------------------- bluetooth
-    [0xF00AF, "bluetooth"],
-    [0xF00B1, "bluetooth_connected"],
-    [0xF00B2, "bluetooth_disabled"],
+  // ------------------------------------------------- bluetooth
+  [0xF00AF, "bluetooth"],
+  [0xF00B1, "bluetooth_connected"],
+  [0xF00B2, "bluetooth_disabled"],
 
-    // ----------------------------------------------------- audio
-    [0xF02CB, "headphones"],
-    [0xF04C3, "speaker"],
-    [0xF036C, "mic"],
-    [0xF036D, "mic_off"],
-    [0xF057E, "volume_up"],
-    [0xF075F, "volume_off"],
-    [0x0F026, "volume_off"],                 // the fa-* glyphs the audio panel uses
-    [0x0F027, "volume_down"],
-    [0x0F028, "volume_up"],
+  // ----------------------------------------------------- audio
+  [0xF02CB, "headphones"],
+  [0xF04C3, "speaker"],
+  [0xF036C, "mic"],
+  [0xF036D, "mic_off"],
+  [0xF057E, "volume_up"],
+  [0xF075F, "volume_off"],
+  [0x0F026, "volume_off"],                 // the fa-* glyphs the audio panel uses
+  [0x0F027, "volume_down"],
+  [0x0F028, "volume_up"],
 
-    // --------------------------------------------------- display
-    [0xF0379, "monitor"],
-    [0xF037A, "desktop_windows"],            // more than one screen
+  // --------------------------------------------------- display
+  [0xF0379, "monitor"],
+  [0xF037A, "desktop_windows"],            // more than one screen
 
-    // --------------------------------------------- battery, idle
-    [0xF007A, "battery_1_bar"],
-    [0xF007B, "battery_1_bar"],
-    [0xF007C, "battery_2_bar"],
-    [0xF007D, "battery_3_bar"],
-    [0xF007E, "battery_3_bar"],
-    [0xF007F, "battery_4_bar"],
-    [0xF0080, "battery_5_bar"],
-    [0xF0081, "battery_5_bar"],
-    [0xF0082, "battery_6_bar"],
-    [0xF0079, "battery_full"],
-    [0xF0084, "battery_alert"],
+  // --------------------------------------------- battery, idle
+  [0xF007A, "battery_android_1"],
+  [0xF007B, "battery_android_1"],
+  [0xF007C, "battery_android_2"],
+  [0xF007D, "battery_android_2"],
+  [0xF007E, "battery_android_3"],
+  [0xF007F, "battery_android_4"],
+  [0xF0080, "battery_android_4"],
+  [0xF0081, "battery_android_5"],
+  [0xF0082, "battery_android_5"],
+  [0xF0079, "battery_android_full"],
+  [0xF0084, "battery_android_alert"],
 
-    // ----------------------------------------- battery, charging
-    [0xF089C, "battery_charging_20"],
-    [0xF0086, "battery_charging_20"],
-    [0xF0087, "battery_charging_30"],
-    [0xF0088, "battery_charging_30"],
-    [0xF089D, "battery_charging_50"],
-    [0xF0089, "battery_charging_60"],
-    [0xF089E, "battery_charging_60"],
-    [0xF008A, "battery_charging_80"],
-    [0xF008B, "battery_charging_90"],
-    [0xF0085, "battery_charging_full"],
+  // ----------------------------------------- battery, charging
+  [0xF089C, "battery_android_bolt"],
+  [0xF0086, "battery_android_bolt"],
+  [0xF0087, "battery_android_bolt"],
+  [0xF0088, "battery_android_bolt"],
+  [0xF089D, "battery_android_bolt"],
+  [0xF0089, "battery_android_bolt"],
+  [0xF089E, "battery_android_bolt"],
+  [0xF008A, "battery_android_bolt"],
+  [0xF008B, "battery_android_bolt"],
+  [0xF0085, "battery_android_bolt"],
 
-    // ---------------------------------------------------- chrome
-    [0xF0140, "expand_more"],
-    [0xF0141, "chevron_left"],
-    [0xF0142, "chevron_right"],
-    [0xF00ED, "calendar_month"],
+  // ---------------------------------------------------- chrome
+  [0xF0140, "expand_more"],
+  [0xF0141, "chevron_left"],
+  [0xF0142, "chevron_right"],
+  [0xF00ED, "calendar_month"],
 ];
 
 var map = (function () {
-    var built = {};
-    for (var i = 0; i < codePoints.length; i++)
-        built[String.fromCodePoint(codePoints[i][0])] = codePoints[i][1];
+  var built = {};
+  for (var i = 0; i < codePoints.length; i++)
+    built[String.fromCodePoint(codePoints[i][0])] = codePoints[i][1];
 
-    return built;
+  return built;
 })();
 
 // The Material name for a glyph, or "" when it should be left alone.
 function name(text) {
-    var value = String(text || "");
-    if (value.length === 0)
-        return "";
+  var value = String(text || "");
+  if (value.length === 0)
+    return "";
 
-    return map[value] || "";
+  return map[value] || "";
 }
 
 if (typeof module !== "undefined") {
-    module.exports = { family: family, map: map, name: name };
+  module.exports = { family: family, map: map, name: name };
 }
