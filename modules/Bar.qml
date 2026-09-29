@@ -218,6 +218,13 @@ PanelWindow {
         }
     }
 
+    function toggleExpanded() {
+        hoverTimer.stop();
+        barWindow.barExpanded = !barWindow.barExpanded;
+        barWindow.isHovered = false;
+        barWindow.powermenuActive = false;
+    }
+
     function toggleEditMode(force) {
         barWindow.editMode = force === undefined ? !barWindow.editMode : !!force;
         // Rearranging is only meaningful on the full-width bar, where the
@@ -282,6 +289,17 @@ PanelWindow {
 
         function resetLayout(): void {
             BarConfig.resetLayout();
+        }
+
+        // Same as clicking the clock: wrap the bar into the pill or unwrap it.
+        function toggleExpanded(): void {
+            barWindow.toggleExpanded();
+        }
+
+        // Unwrap only, for keybinds that open a panel living on the full bar.
+        function expand(): void {
+            if (!barWindow.barExpanded)
+                barWindow.toggleExpanded();
         }
     }
 
