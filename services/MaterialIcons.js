@@ -92,6 +92,17 @@ var map = (function () {
   return built;
 })();
 
+// Material draws these speakers smaller than volume_up; scale them so every
+// volume level shows the same size speaker.
+var scales = {
+  "volume_down": 1.35,
+  "volume_mute": 1.35,
+};
+
+function scale(materialName) {
+  return scales[materialName] || 1;
+}
+
 // The Material name for a glyph, or "" when it should be left alone.
 function name(text) {
   var value = String(text || "");
@@ -102,5 +113,5 @@ function name(text) {
 }
 
 if (typeof module !== "undefined") {
-  module.exports = { family: family, map: map, name: name };
+  module.exports = { family: family, map: map, name: name, scale: scale };
 }

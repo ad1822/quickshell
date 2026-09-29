@@ -23,7 +23,7 @@ Item {
   // is ignored, so its weight goes through the wght axis instead.
   readonly property var renderedAxes: usesMaterial ? ({ "wght": 300 }) : ({})
 
-  readonly property int renderedFontSize: Math.max(1, Math.round(fontSize))
+  readonly property int renderedFontSize: Math.max(1, Math.round(fontSize * (usesMaterial ? MaterialIcons.scale(materialName) : 1)))
   readonly property real tightWidth: Math.max(1, glyphMetrics.tightBoundingRect.width)
   readonly property real horizontalCorrection: glyph.implicitWidth / 2 - (glyphMetrics.tightBoundingRect.x + tightWidth / 2)
   readonly property real paintedCenterX: glyph.x + glyphMetrics.tightBoundingRect.x + tightWidth / 2
