@@ -23,7 +23,7 @@ Rectangle {
         color: Style.text
         font.family: "Material Symbols Rounded"
         font.pixelSize: Omarchy.Style.bar.iconFont
-        font.weight: Style.fontWeight
+        font.variableAxes: { "wght": 300 }
         anchors.centerIn: parent
     }
 

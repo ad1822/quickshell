@@ -188,6 +188,7 @@ Item {
             color: Style.overlay1
             font.family: "Material Symbols Rounded"
             font.pixelSize: 14
+            font.variableAxes: { "wght": 300 }
             verticalAlignment: Text.AlignVCenter
             visible: !playerWidget.isPlaying
         }

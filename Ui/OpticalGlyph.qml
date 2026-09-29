@@ -19,7 +19,9 @@ Item {
   readonly property bool usesMaterial: materialName !== ""
   readonly property string renderedText: usesMaterial ? materialName : root.text
   readonly property string renderedFamily: usesMaterial ? MaterialIcons.family : root.fontFamily
-  readonly property int renderedWeight: usesMaterial ? Font.Light : Font.Normal
+  // The Material font is a variable font loaded from file, where font.weight
+  // is ignored, so its weight goes through the wght axis instead.
+  readonly property var renderedAxes: usesMaterial ? ({ "wght": 300 }) : ({})
 
   readonly property int renderedFontSize: Math.max(1, Math.round(fontSize))
   readonly property real tightWidth: Math.max(1, glyphMetrics.tightBoundingRect.width)
@@ -31,7 +33,7 @@ Item {
     id: glyphMetrics
     font.family: root.renderedFamily
     font.pixelSize: root.renderedFontSize
-    font.weight: root.renderedWeight
+    font.variableAxes: root.renderedAxes
     text: root.renderedText
   }
 
@@ -46,7 +48,7 @@ Item {
     color: root.color
     font.family: root.renderedFamily
     font.pixelSize: root.renderedFontSize
-    font.weight: root.renderedWeight
+    font.variableAxes: root.renderedAxes
     renderType: Text.NativeRendering
   }
 
