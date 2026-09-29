@@ -15,7 +15,9 @@ QtObject {
     // The terminal, nvim, tmux and the CLI are untouched by this and stay on
     // Iosevka Nerd Font Mono.
     readonly property string fontFamily: "Adwaita Sans"
-    readonly property int fontSize: 13
+    // Drives the clock and most bar text (Clock, Network, Volume, Brightness,
+    // WallpaperButton all bind to it), so it is the one lever for bar type.
+    readonly property int fontSize: 16
     readonly property int fontWeight: 500
     // Theme Colors
     readonly property string rosewater: "#f5e0dc"
