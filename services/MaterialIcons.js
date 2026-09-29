@@ -42,8 +42,9 @@ var codePoints = [
   [0xF036C, "mic"],
   [0xF036D, "mic_off"],
   [0xF057E, "volume_up"],
-  [0xF075F, "volume_off"],
-  [0x0F026, "volume_off"],                 // the fa-* glyphs the audio panel uses
+  [0xF075F, "no_sound"],
+  [0x0EEE8, "no_sound"],                   // muted / no sink
+  [0x0F026, "volume_mute"],                // the fa-* glyphs the audio panel uses
   [0x0F027, "volume_down"],
   [0x0F028, "volume_up"],
 
