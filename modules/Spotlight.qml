@@ -38,10 +38,23 @@ PanelWindow {
         return null;
     }
 
+    // Rows shown before the results list starts scrolling.
+    readonly property int maxVisibleRows: 8
+
+    function appItem(app) {
+        return {
+            name: app.name,
+            desc: "Application",
+            type: "app",
+            exec: app.exec,
+            icon: app.icon
+        };
+    }
+
     function filter(text) {
-        // If search is empty, show absolutely no suggestions (macOS style)
+        // Empty search lists every app (already sorted by name).
         if (!text || text.trim() === "") {
-            filteredItems = [];
+            filteredItems = allApps.map(appItem);
             selectedIndex = 0;
             return;
         }
@@ -68,15 +81,8 @@ PanelWindow {
         var appMatches = [];
         for (var i = 0; i < allApps.length; i++) {
             var app = allApps[i];
-            if (app.name.toLowerCase().indexOf(queryLower) !== -1 || app.exec.toLowerCase().indexOf(queryLower) !== -1) {
-                appMatches.push({
-                    name: app.name,
-                    desc: "Application",
-                    type: "app",
-                    exec: app.exec,
-                    icon: app.icon
-                });
-            }
+            if (app.name.toLowerCase().indexOf(queryLower) !== -1 || app.exec.toLowerCase().indexOf(queryLower) !== -1)
+                appMatches.push(appItem(app));
         }
         items = items.concat(appMatches.slice(0, 5));
 
@@ -403,10 +409,16 @@ print(json.dumps(apps))
                     y: 8
                     spacing: 6
                     model: spotlightWindow.filteredItems
-                    interactive: false
+                    readonly property int visibleRows: Math.min(spotlightWindow.filteredItems.length, spotlightWindow.maxVisibleRows)
+                    interactive: spotlightWindow.filteredItems.length > spotlightWindow.maxVisibleRows
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    currentIndex: spotlightWindow.selectedIndex
+                    highlightFollowsCurrentItem: false
+                    onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
 
-                    // Compute clean height with spacing included
-                    height: spotlightWindow.filteredItems.length > 0 ? (spotlightWindow.filteredItems.length * 48 + (spotlightWindow.filteredItems.length - 1) * spacing) : 0
+                    // Compute clean height with spacing included, capped at maxVisibleRows
+                    height: visibleRows > 0 ? (visibleRows * 48 + (visibleRows - 1) * spacing) : 0
 
                     add: Transition {
                         NumberAnimation {
