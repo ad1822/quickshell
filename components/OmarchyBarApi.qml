@@ -153,6 +153,10 @@ QtObject {
     // components/popout uses: its control point above 1 overshoots the bottom
     // edge on these taller cards. The grow/fade curves above handle closing.
     property var popupOpenCurve: Style.expressiveSlowEffectsCurve
+    // The fade, though, does use components/popout's spatial curve: on opacity
+    // its overshoot just clamps at 1, so the card turns solid early and is seen
+    // growing rather than fading in as a translucent full-size ghost.
+    property var popupOpenFadeCurve: Style.expressiveSlowSpatialCurve
 
     // How long a popup may sit as a pill on the bar's edge waiting for its
     // content to stop resizing before it unfolds anyway. Panels measure

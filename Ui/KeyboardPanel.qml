@@ -647,7 +647,7 @@ PanelWindow {
             NumberAnimation {
                 duration: root.bar && root.bar.popupFadeDuration !== undefined ? root.bar.popupFadeDuration : 140
                 easing.type: root.bar && root.bar.popupFadeCurve !== undefined ? Easing.Bezier : Easing.OutCubic
-                easing.bezierCurve: card.useOpenCurve ? root.bar.popupOpenCurve : root.bar && root.bar.popupFadeCurve !== undefined ? root.bar.popupFadeCurve : []
+                easing.bezierCurve: card.useOpenCurve ? (root.bar.popupOpenFadeCurve !== undefined ? root.bar.popupOpenFadeCurve : root.bar.popupOpenCurve) : root.bar && root.bar.popupFadeCurve !== undefined ? root.bar.popupFadeCurve : []
             }
 
         }
