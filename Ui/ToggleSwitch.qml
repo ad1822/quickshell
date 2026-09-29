@@ -79,8 +79,9 @@ Item {
     height: root.trackHeight
     anchors.centerIn: parent
     radius: root.rounded ? height / 2 : 0
+    // On reads in the accent, like a macOS switch.
     color: root.checked
-      ? Style.selectedFillFor(root.foreground, root.accent)
+      ? root.accent
       : Style.normalFillFor(root.foreground, root.accent)
     borderSpec: Border.controlSpec(root.checked ? "selected" : "normal", root.foreground, root.accent)
 
@@ -92,7 +93,7 @@ Item {
       radius: root.rounded ? height / 2 : 0
       x: root.checked ? track.width - width - root.knobInset : root.knobInset
       anchors.verticalCenter: parent.verticalCenter
-      color: root.checked ? Style.selectedStateColor(root.foreground, root.accent) : Qt.darker(root.foreground, 1.25)
+      color: root.checked ? root.foreground : Qt.darker(root.foreground, 1.25)
 
       Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
       Behavior on color { ColorAnimation { duration: 120 } }

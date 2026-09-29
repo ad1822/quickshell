@@ -87,7 +87,10 @@ Panel {
     return d && d.isPresent && !UPower.onBattery && !root.batteryFlowIdle
   }
 
+  // Neutral normally; green while charging, red when low.
   readonly property color batteryFillColor: {
+    if (root.charging) return Color.accent
+    if (root.discharging && root.batteryFraction <= 0.2) return Color.urgent
     return root.bar ? root.bar.foreground : Color.foreground
   }
 

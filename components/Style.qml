@@ -19,33 +19,37 @@ QtObject {
     // WallpaperButton all bind to it), so it is the one lever for bar type.
     readonly property int fontSize: 14
     readonly property int fontWeight: 500
-    // Theme Colors
-    readonly property string rosewater: "#f5e0dc"
-    readonly property string flamingo: "#f2cdcd"
-    readonly property string pink: "#f5c2e7"
-    readonly property string mauve: "#cba6f7"
-    readonly property string red: "#f38ba8"
-    readonly property string maroon: "#eba0ac"
-    readonly property string peach: "#fab387"
-    readonly property string yellow: "#f9e2af"
-    readonly property string green: "#a6e3a1"
-    readonly property string teal: "#94e2d5"
-    readonly property string sky: "#89dceb"
-    readonly property string sapphire: "#74c7ec"
-    readonly property string blue: "#89b4fa"
-    readonly property string lavender: "#b4befe"
-    readonly property string text: "#cdd6f4"
-    readonly property string subtext1: "#bac2de"
-    readonly property string subtext0: "#a6adc8"
-    readonly property string overlay2: "#9399b2"
-    readonly property string overlay1: "#7f849c"
-    readonly property string overlay0: "#6c7086"
-    readonly property string surface2: "#585b70"
-    readonly property string surface1: "#45475a"
-    readonly property string surface0: "#313244"
-    readonly property string base: "#1e1e2e"
-    readonly property string mantle: "#181825"
-    readonly property string crust: "#11111b"
+    // Theme Colors: macOS dark. The Catppuccin names are kept so nothing that
+    // reads them has to change. Neutrals are Apple's system greys over true
+    // black; mauve is the accent and maps to system green, red stays for mute
+    // and errors, peach/yellow for warnings. lavender and the rose tones are
+    // neutral whites so the UI stays mostly monochrome.
+    readonly property string rosewater: "#f2f2f7"
+    readonly property string flamingo: "#e5e5ea"
+    readonly property string pink: "#ff6482"
+    readonly property string mauve: "#30d158"
+    readonly property string red: "#ff453a"
+    readonly property string maroon: "#ff6961"
+    readonly property string peach: "#ff9f0a"
+    readonly property string yellow: "#ffd60a"
+    readonly property string green: "#30d158"
+    readonly property string teal: "#40c8e0"
+    readonly property string sky: "#64d2ff"
+    readonly property string sapphire: "#409cff"
+    readonly property string blue: "#409cff"
+    readonly property string lavender: "#e5e5ea"
+    readonly property string text: "#f5f5f7"
+    readonly property string subtext1: "#d1d1d6"
+    readonly property string subtext0: "#aeaeb2"
+    readonly property string overlay2: "#98989d"
+    readonly property string overlay1: "#8e8e93"
+    readonly property string overlay0: "#636366"
+    readonly property string surface2: "#48484a"
+    readonly property string surface1: "#3a3a3c"
+    readonly property string surface0: "#2c2c2e"
+    readonly property string base: "#1c1c1e"
+    readonly property string mantle: "#0e0e10"
+    readonly property string crust: "#000000"
 
     // Caelestia Expressive Animation Curves (Bezier Control Points)
     readonly property var expressiveDefaultSpatialCurve: [0.38, 1.21, 0.22, 1, 1, 1]
