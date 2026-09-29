@@ -5,7 +5,9 @@ QtObject {
     // Text color on active workspace
 
     // Font Properties
-    readonly property string fontFamily: "Iosevka"
+    // UI font. Inter per the design spec; the terminal, nvim, tmux and the
+    // CLI stay on Iosevka Nerd Font Mono, which this does not touch.
+    readonly property string fontFamily: "Inter"
     readonly property int fontSize: 13
     readonly property int fontWeight: 500
     // Theme Colors
