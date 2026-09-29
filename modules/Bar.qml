@@ -27,6 +27,10 @@ PanelWindow {
     readonly property int barHeight: Math.round(30 * barScale)
     readonly property int barExpandedHeight: Math.round(64 * barScale)
     readonly property int barTopMargin: Math.round(4 * barScale)
+    // Collapsed (pill) only: reserve less than the pill's full height so the
+    // gap between the pill and the windows below is tighter. There is no full
+    // strip in this state, so no band can show through.
+    readonly property int collapsedZoneTrim: Math.round(8 * barScale)
 
     // Zero passes through: a deliberate `border.width: 0` must stay 0, not get
     // floored up to a 1px hairline. The floor only guards positive values from
@@ -288,7 +292,7 @@ PanelWindow {
     implicitHeight: barWindow.barExpanded ? barWindow.barHeight : ((barWindow.isHovered || barWindow.powermenuActive || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? barWindow.barExpandedHeight : barWindow.barHeight)
     margins.top: barWindow.barExpanded ? 0 : barWindow.barTopMargin
     color: "transparent"
-    WlrLayershell.exclusiveZone: barWindow.barHeight + (barWindow.barExpanded ? 0 : barWindow.barTopMargin)
+    WlrLayershell.exclusiveZone: barWindow.barHeight + (barWindow.barExpanded ? 0 : barWindow.barTopMargin - barWindow.collapsedZoneTrim)
     WlrLayershell.keyboardFocus: powermenuActive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
     Timer {
