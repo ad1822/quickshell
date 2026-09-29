@@ -252,6 +252,7 @@ PanelWindow {
             focusPrimed = false;
             // Fold back to the pill, and make the next open re-wait for a settled
             // content size rather than reusing this one's.
+            card.opening = false;
             card.unfolded = false;
         }
         if (!bar)
@@ -496,6 +497,15 @@ PanelWindow {
         // Set once the content this popup is about to reveal has stopped
         // resizing, which is what actually starts the unfold.
         property bool unfolded: false
+        // Opening plays the close animation backwards: the same duration, with
+        // the curve mirrored in time. Set just before `unfolded` flips so the
+        // Behaviors pick up the right curve when they start.
+        property bool opening: false
+        function timeReversed(curve) {
+            return [1 - curve[2], 1 - curve[3], 1 - curve[0], 1 - curve[1], 1, 1];
+        }
+        readonly property var growCurve: root.bar && root.bar.popupGrowCurve !== undefined ? (opening ? timeReversed(root.bar.popupGrowCurve) : root.bar.popupGrowCurve) : []
+        readonly property var fadeCurve: root.bar && root.bar.popupFadeCurve !== undefined ? (opening ? timeReversed(root.bar.popupFadeCurve) : root.bar.popupFadeCurve) : []
         // The size the unfold grows into. Bound live, but behind a short glide, so
         // a panel that changes size while it is up — a scan filling in, a section
         // expanding — slides the card to its new size instead of snapping to it,
@@ -531,7 +541,7 @@ PanelWindow {
         topRightRadius: fusedToBar && (root.barPos === "top" || root.barPos === "right") ? 0 : radius
         bottomLeftRadius: fusedToBar && (root.barPos === "bottom" || root.barPos === "left") ? 0 : radius
         bottomRightRadius: fusedToBar && (root.barPos === "bottom" || root.barPos === "right") ? 0 : radius
-        opacity: root.open || root.popoutSwitching ? 1 : 0
+        opacity: unfolded || root.popoutSwitching ? 1 : 0
 
         // `popupUnfoldGrace` caps the wait so a panel whose content never settles
         // (a clock relaying every second, a query that never lands) still opens.
@@ -564,8 +574,10 @@ PanelWindow {
                     lastWidth = root.contentWidth;
                     lastHeight = root.contentHeight;
                 }
-                if (stableTicks >= 2 || waited >= grace)
+                if (stableTicks >= 2 || waited >= grace) {
+                    card.opening = true;
                     card.unfolded = true;
+                }
 
             }
         }
@@ -639,7 +651,7 @@ PanelWindow {
             NumberAnimation {
                 duration: root.bar && root.bar.popupFadeDuration !== undefined ? root.bar.popupFadeDuration : 140
                 easing.type: root.bar && root.bar.popupFadeCurve !== undefined ? Easing.Bezier : Easing.OutCubic
-                easing.bezierCurve: root.bar && root.bar.popupFadeCurve !== undefined ? root.bar.popupFadeCurve : []
+                easing.bezierCurve: card.fadeCurve
             }
 
         }
@@ -650,7 +662,7 @@ PanelWindow {
             NumberAnimation {
                 duration: root.bar && root.bar.popupGrowDuration !== undefined ? root.bar.popupGrowDuration : 0
                 easing.type: root.bar && root.bar.popupGrowCurve !== undefined ? Easing.Bezier : Easing.OutCubic
-                easing.bezierCurve: root.bar && root.bar.popupGrowCurve !== undefined ? root.bar.popupGrowCurve : []
+                easing.bezierCurve: card.growCurve
             }
 
         }
