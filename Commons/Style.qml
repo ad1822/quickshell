@@ -281,16 +281,33 @@ QtObject {
   property var fontOverrides: ({})
   property var barOverrides: ({})
   property bool barScaleWithFont: true
-  readonly property real fontScale: Math.max(1 / 12, fontBaseSize / 12)
+
+  // The shell is drawn at this multiple of its configured size.
+  //
+  // Hyprland runs the monitor at scale 1 so browsers, terminals, and every
+  // other app render at native resolution; magnifying the shell on its own is
+  // what keeps the bar and its panels readable without scaling the desktop
+  // with them. 1.5 reproduces how the shell looked back when the monitor
+  // itself ran at 1.5x.
+  //
+  // It is applied to `fontScale` and `fontPx`, the two roots every font,
+  // spacing, and bar token derives from, so the whole kit scales in step.
+  // `fontBaseSize` deliberately stays as configured, so the text-size control
+  // keeps reading and writing real px from shell.toml.
+  readonly property real shellZoom: 1.5
+
+  readonly property real fontScale: Math.max(1 / 12, fontBaseSize / 12) * shellZoom
 
   function fontPx(mult) {
-    return Math.max(1, Math.round(fontBaseSize * mult))
+    return Math.max(1, Math.round(fontBaseSize * mult * shellZoom))
   }
 
   function fontToken(key, fallback) {
+    // `fallback` already came through fontPx, so only an explicit theme
+    // override — raw px — needs zooming here.
     var v = fontOverrides[key]
     var n = Number(v)
-    return (isFinite(n) && n > 0) ? Math.round(n) : fallback
+    return (isFinite(n) && n > 0) ? Math.round(n * shellZoom) : fallback
   }
 
   function barToken(key, fallback) {
