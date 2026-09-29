@@ -12,11 +12,9 @@
       "right": [
         "player",
         "separator:3",
-        "bluetooth-panel",
-        "monitor-panel",
+        "wallpaper",
         "audio-panel",
         "network-panel",
-        "wallpaper",
         "power-panel"
       ]
     }

@@ -1,19 +1,28 @@
 import QtQuick
 import Quickshell.Io
+// Namespaced: components/Style is this shell's palette, qs.Commons.Style holds
+// the bar geometry tokens the imported widgets size themselves from.
+import qs.Commons as Omarchy
 
+// This button predates the imported panel widgets and used to carry its own
+// 26x22 slot, its own glyph size and an accent colour of its own, which left
+// it visibly smaller and differently tinted than the icons beside it. It now
+// takes the same three tokens they do, so the row reads evenly.
 Rectangle {
     id: wallRoot
 
-    implicitWidth: 26
-    implicitHeight: 22
+    implicitWidth: Omarchy.Style.bar.iconSlot
+    implicitHeight: Omarchy.Style.bar.iconSlot
     color: "transparent"
     radius: 8
 
     Text {
         text: "wallpaper"
-        color: mouseArea.containsMouse ? Style.mauve : Style.mauve
+        // Style.lavender is what OmarchyBarApi hands the other bar glyphs as
+        // barForeground, so this matches rather than standing out.
+        color: Style.lavender
         font.family: "Material Symbols Rounded"
-        font.pixelSize: Style.fontSize
+        font.pixelSize: Omarchy.Style.bar.iconFont
         font.weight: Style.fontWeight
         anchors.centerIn: parent
     }
