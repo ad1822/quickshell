@@ -231,6 +231,18 @@ Panel {
     onExited: root.refresh()
   }
 
+  // Session actions, the same commands as components/popout/PowermenuPopup.
+  readonly property var sessionActions: [
+    { label: "Logout", icon: String.fromCodePoint(0xF0343), command: "hyprshutdown -t 'Logging Out...' --post-cmd 'logout -P 0'" },
+    { label: "Reboot", icon: String.fromCodePoint(0xF0709), command: "reboot" },
+    { label: "Shutdown", icon: String.fromCodePoint(0xF0425), command: "hyprshutdown -t 'Shutting Down...' --post-cmd 'shutdown -P 0'" }
+  ]
+
+  function runSessionAction(action) {
+    root.close()
+    Quickshell.execDetached(["sh", "-c", action.command])
+  }
+
   Timer { interval: 5000; running: root.opened; repeat: true; onTriggered: root.refresh() }
 
   // Rotate the status phrase while the panel is open and we're in a
@@ -502,6 +514,48 @@ Panel {
                     root.profileIndex = index
                   }
                 }
+              }
+            }
+          }
+        }
+
+        // ---------- Session: logout · reboot · shutdown ----------
+        PanelSeparator {
+          foreground: root.bar.foreground
+        }
+
+        Column {
+          width: parent.width
+          spacing: Style.space(10)
+
+          PanelSectionHeader {
+            text: "SESSION"
+            foreground: root.bar.foreground
+            fontFamily: root.bar.fontFamily
+          }
+
+          Row {
+            id: sessionRow
+            width: parent.width
+            spacing: Style.space(6)
+
+            readonly property real cellWidth: (width - spacing * (root.sessionActions.length - 1)) / root.sessionActions.length
+
+            Repeater {
+              model: root.sessionActions
+              Button {
+                required property var modelData
+                width: sessionRow.cellWidth
+                iconText: modelData.icon
+                iconSize: Style.font.title
+                text: modelData.label
+                fontSize: Style.font.bodySmall
+                foreground: root.bar.foreground
+                fontFamily: root.bar.fontFamily
+                horizontalPadding: Style.spacing.controlPaddingX
+                verticalPadding: Style.spacing.controlPaddingY + Style.space(2)
+                bordered: true
+                onClicked: root.runSessionAction(modelData)
               }
             }
           }
