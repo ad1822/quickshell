@@ -19,11 +19,14 @@ PanelWindow {
     // renders the bar at exactly the size it has on a 1.5x monitor while the
     // desktop stays at 1.25x.
     //
-    // It applies to everything uniformly — height, glyphs, icons, radii,
-    // padding, gaps — because that is precisely what the compositor does at
-    // 1.5x. Anything left unscaled would change the bar's proportions rather
-    // than preserve them.
-    readonly property real barScale: 1.35
+    // Two knobs, because the bar wanted bigger text without a taller strip.
+    // barScale drives geometry only — height, boxes, radii, padding, gaps —
+    // and stays at the 1.2 that reproduces the 1.5x strip height.
+    readonly property real barScale: 1.2
+
+    // barTextScale drives glyphs, and runs ahead of the geometry so the text
+    // reads large against a strip that is not itself inflated.
+    readonly property real barTextScale: 1.55
 
     readonly property int barHeight: Math.round(30 * barScale)
     readonly property int barExpandedHeight: Math.round(64 * barScale)
@@ -31,7 +34,7 @@ PanelWindow {
     // Geometry keeps its fractional value, so hairlines stay hairlines;
     // font sizes round, since pixelSize is an int.
     function px(v) { return Math.max(1, v * barScale); }
-    function fontPx(v) { return Math.max(1, Math.round(v * barScale)); }
+    function fontPx(v) { return Math.max(1, Math.round(v * barTextScale)); }
 
     property bool modulesExpanded: false
     property bool barExpanded: false
