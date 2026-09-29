@@ -326,10 +326,10 @@ PanelWindow {
 
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        height: barWindow.barExpanded ? 30 : ((barWindow.isHovered || barWindow.powermenuActive || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? 64 : 30)
+        height: barWindow.barExpanded ? barWindow.barHeight : ((barWindow.isHovered || barWindow.powermenuActive || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? barWindow.barExpandedHeight : barWindow.barHeight)
         color: "#11111b"
-        width: barWindow.barExpanded ? parent.width : (barWindow.powermenuActive ? 260 : ((barWindow.isHovered || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? 360 : (barWindow.activeToastNotification !== null ? 220 : (barWindow.osdMode !== "" ? 170 : (barClock.width + 10)))))
-        radius: barWindow.barExpanded ? 0 : ((barWindow.isHovered || barWindow.powermenuActive || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? 24 : 15)
+        width: barWindow.barExpanded ? parent.width : (barWindow.powermenuActive ? barWindow.px(260) : ((barWindow.isHovered || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? barWindow.px(360) : (barWindow.activeToastNotification !== null ? barWindow.px(220) : (barWindow.osdMode !== "" ? barWindow.px(170) : (barClock.width + barWindow.px(10))))))
+        radius: barWindow.barExpanded ? 0 : ((barWindow.isHovered || barWindow.powermenuActive || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? barWindow.px(24) : barWindow.px(15))
         clip: true
 
         MouseArea {
@@ -1493,7 +1493,7 @@ PanelWindow {
         id: rightContainer
 
         anchors.right: parent.right
-        anchors.rightMargin: barWindow.barExpanded ? 0 : -500
+        anchors.rightMargin: barWindow.barExpanded ? 0 : -barWindow.px(500)
         anchors.verticalCenter: parent.verticalCenter
         height: parent.height
         spacing: barWindow.px(6)
@@ -1525,7 +1525,7 @@ PanelWindow {
         id: workspacesWidget
 
         anchors.left: parent.left
-        anchors.leftMargin: barWindow.barExpanded ? 0 : -300
+        anchors.leftMargin: barWindow.barExpanded ? 0 : -barWindow.px(300)
         anchors.verticalCenter: parent.verticalCenter
         opacity: barWindow.barExpanded ? 1 : 0
 
@@ -1597,7 +1597,7 @@ PanelWindow {
             Rectangle {
                 id: middleLine
 
-                width: barWindow.modulesExpanded ? 0 : 12
+                width: barWindow.modulesExpanded ? 0 : barWindow.px(12)
                 height: barWindow.px(1.5)
                 radius: barWindow.px(0.75)
                 color: Style.text
