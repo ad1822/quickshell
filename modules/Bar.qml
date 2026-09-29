@@ -28,8 +28,11 @@ PanelWindow {
     readonly property int barExpandedHeight: Math.round(64 * barScale)
     readonly property int barTopMargin: Math.round(4 * barScale)
 
-    function px(v) { return Math.max(1, v * barScale); }
-    function fontPx(v) { return Math.max(1, Math.round(v * barScale)); }
+    // Zero passes through: a deliberate `border.width: 0` must stay 0, not get
+    // floored up to a 1px hairline. The floor only guards positive values from
+    // rounding away to nothing.
+    function px(v) { return v <= 0 ? v : Math.max(1, v * barScale); }
+    function fontPx(v) { return v <= 0 ? v : Math.max(1, Math.round(v * barScale)); }
 
     property bool modulesExpanded: false
     property bool barExpanded: false

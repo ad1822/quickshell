@@ -345,8 +345,8 @@ QtObject {
     // The imported bar widgets (wifi, battery, volume, ...) draw their glyphs
     // from these two and nothing else, so they are the lever for icon size.
     // The canvas bounds the glyph, so it has to lead iconFont or glyphs clip.
-    readonly property int iconCanvas:     root.barToken("icon-canvas",     19)
-    readonly property int iconFont:       root.barToken("icon-font",       16)
+    readonly property int iconCanvas:     root.barToken("icon-canvas",     17)
+    readonly property int iconFont:       root.barToken("icon-font",       14)
     readonly property int statusSlot:     root.barToken("status-slot",     21)
   }
 
