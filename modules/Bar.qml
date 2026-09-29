@@ -23,7 +23,7 @@ PanelWindow {
     // padding, gaps — because that is precisely what the compositor does at
     // 1.5x. Anything left unscaled would change the bar's proportions rather
     // than preserve them.
-    readonly property real barScale: 1.2
+    readonly property real barScale: 1.35
 
     readonly property int barHeight: Math.round(30 * barScale)
     readonly property int barExpandedHeight: Math.round(64 * barScale)
