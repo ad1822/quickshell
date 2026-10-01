@@ -17,7 +17,7 @@ Rectangle {
     radius: 8
 
     Text {
-        text: "wallpaper"
+        text: "image"
         // Style.lavender is what OmarchyBarApi hands the other bar glyphs as
         // barForeground, so this matches rather than standing out.
         color: Style.text

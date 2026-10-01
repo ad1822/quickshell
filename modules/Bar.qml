@@ -350,7 +350,7 @@ PanelWindow {
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         height: barWindow.barExpanded ? barWindow.barHeight : ((barWindow.isHovered || barWindow.powermenuActive || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? barWindow.barExpandedHeight : barWindow.barHeight)
-        color: "#11111b"
+        color: "#000000"
         width: barWindow.barExpanded ? parent.width : (barWindow.powermenuActive ? barWindow.px(260) : ((barWindow.isHovered || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? barWindow.px(360) : (barWindow.activeToastNotification !== null ? barWindow.px(220) : (barWindow.osdMode !== "" ? barWindow.px(170) : (barClock.width + barWindow.px(10))))))
         radius: barWindow.barExpanded ? 0 : ((barWindow.isHovered || barWindow.powermenuActive || (barWindow.activeToastNotification !== null && barWindow.toastHasBody)) ? barWindow.px(24) : barWindow.px(15))
         clip: true

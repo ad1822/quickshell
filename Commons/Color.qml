@@ -14,7 +14,9 @@ QtObject {
 
   readonly property string home: Quickshell.env("HOME")
   readonly property string stateHome: home + "/.local/state"
-  readonly property string currentThemePath: stateHome + "/omarchy/current/theme"
+  // Written by acheron-theme-set (~/.config/acheron/bin), which calls the
+  // acheron.theme IPC target below after every theme change.
+  readonly property string currentThemePath: home + "/.config/acheron/theme/current"
 
   property color foreground: "#cacccc"
   property color background: "#101315"
@@ -219,8 +221,15 @@ QtObject {
     mergeShell()
   }
 
-  // Startup load only. Runtime theme switches push the payload explicitly
-  // through shell IPC.
+  // Loaded at startup, and again whenever acheron-theme-set runs
+  // `quickshell ipc call acheron.theme reload`.
+  property IpcHandler themeIpc: IpcHandler {
+    target: "acheron.theme"
+    function reload(): void {
+      colorsFile.reload()
+      shellFile.reload()
+    }
+  }
   property FileView colorsFile: FileView {
     id: colorsFile
     path: root.currentThemePath + "/colors.toml"
