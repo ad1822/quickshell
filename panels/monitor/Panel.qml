@@ -324,7 +324,10 @@ Panel {
     id: button
     anchors.fill: parent
     bar: root.bar
-    text: Quickshell.screens.length > 1 ? "󰍺" : "󰍹"
+    // Brightness glyph (nf-md-brightness_6) so the button reads as the
+    // brightness control beside the volume icon. Static because the panel
+    // only polls brightness while open, so a level-stepped glyph would go stale.
+    text: "󰃟"
     onPressed: function(b) { root.toggle() }
     onWheelMoved: function(delta) {
       if (!root.brightnessAvailable) return
