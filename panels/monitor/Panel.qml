@@ -324,10 +324,12 @@ Panel {
     id: button
     anchors.fill: parent
     bar: root.bar
-    // Brightness glyph (nf-md-brightness_6) so the button reads as the
-    // brightness control beside the volume icon. Static because the panel
-    // only polls brightness while open, so a level-stepped glyph would go stale.
-    text: "󰃟"
+    // Brightness glyph stepped by level: outline, half and filled sun
+    // (nf-md-brightness_5/6/7). Reads bar.brightness, which the host keeps
+    // live, since this panel only polls brightness while open.
+    readonly property int level: root.bar && root.bar.brightness !== undefined && root.bar.brightness >= 0
+      ? root.bar.brightness : root.brightnessPercent
+    text: level >= 67 ? "󰃠" : level >= 34 ? "󰃟" : "󰃞"
     onPressed: function(b) { root.toggle() }
     onWheelMoved: function(delta) {
       if (!root.brightnessAvailable) return

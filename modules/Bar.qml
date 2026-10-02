@@ -255,6 +255,7 @@ PanelWindow {
 
         window: barWindow.contentItem
         barSize: barWindow.barHeight
+        brightness: brightnessSource.brightness
         position: "top"
     }
 

@@ -40,6 +40,11 @@ QtObject {
 
     property string fontFamily: Style.fontFamily
 
+    // Live backlight level (0-100) from this shell's always-running sysfs
+    // watcher, so the brightness button's glyph tracks changes even while its
+    // panel (which only polls when open) is closed. -1 when unknown.
+    property int brightness: -1
+
     // This shell's bar is a fixed top strip. The panels support all four
     // edges, so these stay properties rather than constants.
     property string position: "top"
